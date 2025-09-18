@@ -1,0 +1,467 @@
+# LangGraph-UP DevKits
+
+A comprehensive development toolkit for LangGraph agents providing reusable components, middleware, context schemas, and testing utilities.
+
+## Features
+
+- 🎯 **Context Schemas**: Composable configuration schemas for different agent types
+- 🔧 **Middleware Components**: Model provider switching and behavior modification
+- 🛠️ **Reusable Tools**: Context-aware tools for web search and MCP integration
+- 🧪 **Testing Utilities**: Mock objects and helpers for agent testing
+- 📦 **Provider Integration**: Seamless model provider support via langchain-dev-utils
+
+## Installation
+
+```bash
+# Core installation
+uv add langgraph-up-devkits
+
+# With provider support
+uv add langgraph-up-devkits[providers]
+
+# With tools
+uv add langgraph-up-devkits[tools]
+
+# Complete installation
+uv add langgraph-up-devkits[all]
+
+# Development
+uv add langgraph-up-devkits[dev]
+```
+
+## Quick Start
+
+```python
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
+from langgraph_up_devkits import (
+    DataAnalystContext,
+    ModelProviderMiddleware,
+    web_search,
+    create_context_aware_prompt
+)
+
+# Create agent using devkit components
+agent = create_agent(
+    model="openrouter:gpt-4o",  # Fallback model - middleware will switch
+    tools=[web_search],
+    prompt=create_context_aware_prompt,
+    context_schema=DataAnalystContext,
+    middleware=[ModelProviderMiddleware()]
+)
+
+# Use with context - middleware will switch to the specified model
+result = await agent.ainvoke(
+    {"messages": [HumanMessage(content="Analyze current market trends")]},
+    context=DataAnalystContext(
+        model="siliconflow:Qwen/Qwen3-8B",  # Middleware switches to this
+        max_search_results=10,
+        max_data_rows=5000
+    )
+)
+```
+
+## Components
+
+### Context Schemas
+
+- `BaseAgentContext` - Core configuration
+- `SearchContext` - Search capabilities
+- `DataContext` - Data analysis features
+- `DataAnalystContext` - Composed context for data analysts
+- `ResearchContext` - Research assistant configuration
+
+### Middleware
+
+- `ModelProviderMiddleware` - Automatic model provider switching
+
+### Tools
+
+- `web_search` - Context-aware web search using Tavily
+- `fetch_url` - HTTP content fetching with async support
+- `get_deepwiki_tools` - Built-in MCP integration for GitHub repository documentation
+- `get_context7_tools` - Built-in MCP integration for library documentation
+- `get_mcp_tools()` - Get tools from any configured MCP server
+- `add_mcp_server()` - Add new MCP servers dynamically
+
+### Utilities
+
+- `create_context_aware_prompt` - Dynamic prompt generation
+- Provider registration utilities
+- Testing helpers and mocks
+
+## Examples
+
+### Basic Context Usage
+
+```python
+from langgraph_up_devkits.context import BaseAgentContext, SearchContext
+
+# Basic agent context
+basic_context = BaseAgentContext(
+    model="openrouter:openai/gpt-4o",
+    max_iterations=5,
+    user_id="user_123",
+    session_id="session_456"
+)
+
+# Search-enabled context
+search_context = SearchContext(
+    model="siliconflow:Qwen/Qwen3-8B",
+    max_search_results=8,
+    enable_deepwiki=True,
+    user_id="researcher_001"
+)
+```
+
+### Middleware for Model Switching
+
+```python
+from langchain.agents import create_agent
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage
+from langgraph_up_devkits.middleware import ModelProviderMiddleware
+# No imports needed - middleware handles providers automatically
+
+class ModelTestContext:
+    def __init__(self, model: str):
+        self.model = model
+
+# Example 1: Fallback model with middleware switching
+middleware = ModelProviderMiddleware()
+fallback_model = init_chat_model("openrouter:gpt-4o")
+
+agent = create_agent(
+    model=fallback_model,  # Fallback model
+    tools=[],
+    prompt="You are a helpful assistant.",
+    context_schema=ModelTestContext,
+    middleware=[middleware]
+)
+
+# Context specifies SiliconFlow model - middleware will switch automatically
+context = ModelTestContext(model="siliconflow:Qwen/Qwen3-8B")
+result = await agent.ainvoke(
+    {"messages": [HumanMessage(content="Hello")]},
+    context=context
+)
+
+# Example 2: Direct SiliconFlow model in create_agent
+agent_direct = create_agent(
+    model="siliconflow:Qwen/Qwen3-8B",  # Direct model specification
+    tools=[],
+    prompt="You are a helpful assistant.",
+    context_schema=ModelTestContext,
+    middleware=[middleware]  # Still useful for context-based switching
+)
+```
+
+### Context-Aware Tools
+
+```python
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
+from langgraph_up_devkits.context import SearchContext
+from langgraph_up_devkits.tools import web_search, fetch_url, get_deepwiki_tools, get_context7_tools
+
+# Create search context with specific settings
+search_context = SearchContext(
+    model="openrouter:anthropic/claude-sonnet-4",
+    max_search_results=5,
+    enable_deepwiki=True
+)
+
+# Get built-in MCP tools
+deepwiki_tools = await get_deepwiki_tools()  # GitHub repository docs
+context7_tools = await get_context7_tools()  # Library documentation
+
+# Create agent with context-aware tools
+agent = create_agent(
+    model="openrouter:gpt-4o",
+    tools=[web_search, fetch_url] + deepwiki_tools + context7_tools,
+    prompt="You are a research assistant with web search, GitHub documentation, and library documentation access.",
+    context_schema=SearchContext
+)
+
+# Tools automatically respect context limits
+result = await agent.ainvoke(
+    {"messages": [HumanMessage(content="Research React.js documentation and latest developments using both GitHub and library docs")]},
+    context=search_context  # web_search will return max 5 results
+)
+```
+
+### Complete Research Assistant Example
+
+```python
+import os
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
+from langgraph_up_devkits import (
+    ResearchContext,
+    ModelProviderMiddleware,
+    web_search,
+    create_context_aware_prompt
+)
+# Set up environment (ensure API keys are available)
+os.environ["TAVILY_API_KEY"] = "your_tavily_key"
+os.environ["SILICONFLOW_API_KEY"] = "your_siliconflow_key"
+
+# Provider registration is automatic - no manual setup needed!
+
+# Create research assistant
+research_agent = create_agent(
+    model="openrouter:openai/gpt-4o",  # Fallback model
+    tools=[web_search],
+    prompt=create_context_aware_prompt,  # Context-aware prompting
+    context_schema=ResearchContext,
+    middleware=[ModelProviderMiddleware()]  # Automatic model switching
+)
+
+# Configure research context
+research_context = ResearchContext(
+    model="siliconflow:Qwen/Qwen3-8B",  # Switch to SiliconFlow
+    max_search_results=10,
+    enable_deepwiki=True,
+    max_iterations=15,
+    user_id="researcher_001",
+    thread_id="research_session_123"
+)
+
+# Perform research task
+result = await research_agent.ainvoke(
+    {"messages": [HumanMessage(content="""
+        Research the current state of large language models in 2024.
+        Focus on recent developments, benchmark results, and industry adoption.
+        Provide a comprehensive analysis with sources.
+    """)]},
+    context=research_context
+)
+
+print(f"Research Result: {result['messages'][-1].content}")
+```
+
+## MCP Integration
+
+The devkits provide seamless integration with Model Context Protocol (MCP) servers. **DeepWiki** and **Context7** are included as built-in servers, and you can easily add more servers.
+
+### Built-in Servers
+
+#### DeepWiki (GitHub Repositories)
+
+DeepWiki provides documentation and insights for GitHub repositories:
+
+```python
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
+from langgraph_up_devkits.tools import get_deepwiki_tools
+
+# Get built-in DeepWiki tools
+deepwiki_tools = await get_deepwiki_tools()
+
+agent = create_agent(
+    model="openrouter:openai/gpt-4o",
+    tools=deepwiki_tools,
+    prompt="You are a helpful assistant with access to GitHub repository documentation."
+)
+
+# Query GitHub repository information
+result = await agent.ainvoke({
+    "messages": [HumanMessage(content="What is React? Use your ask_question tool to query facebook/react.")]
+})
+```
+
+#### Context7 (Library Documentation)
+
+Context7 provides up-to-date documentation for popular libraries and frameworks:
+
+```python
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
+from langgraph_up_devkits.tools import get_context7_tools
+
+# Get built-in Context7 tools
+context7_tools = await get_context7_tools()
+
+agent = create_agent(
+    model="openrouter:openai/gpt-4o",
+    tools=context7_tools,
+    prompt="You are a helpful assistant with access to library documentation."
+)
+
+# Query library documentation
+result = await agent.ainvoke({
+    "messages": [HumanMessage(content="How do I use React hooks? Use resolve-library-id and get-library-docs to find React documentation.")]
+})
+```
+
+### Adding New MCP Servers
+
+You can easily add new MCP servers to extend functionality:
+
+```python
+from langgraph_up_devkits.tools import add_mcp_server, get_mcp_tools
+
+# Add your own custom MCP server
+add_mcp_server("my_custom_server", {
+    "url": "https://my-mcp-server.com/mcp",
+    "transport": "streamable_http"
+})
+
+custom_tools = await get_mcp_tools("my_custom_server")
+```
+
+### Combined MCP Usage
+
+```python
+from langgraph_up_devkits.tools import get_deepwiki_tools, get_context7_tools, get_mcp_tools, add_mcp_server
+
+# Add additional custom servers
+add_mcp_server("my_custom_server", {
+    "url": "https://my-custom-mcp.com/api",
+    "transport": "streamable_http"
+})
+
+# Get tools from multiple servers
+deepwiki_tools = await get_deepwiki_tools()        # Built-in GitHub docs
+context7_tools = await get_context7_tools()        # Built-in library docs
+custom_tools = await get_mcp_tools("my_custom_server")  # Custom server
+
+all_tools = deepwiki_tools + context7_tools + custom_tools
+
+comprehensive_agent = create_agent(
+    model="openrouter:openai/gpt-4o",
+    tools=all_tools,
+    prompt="""You are a comprehensive research assistant with access to:
+    - GitHub repository documentation (via ask_question for repos)
+    - Library documentation (via resolve-library-id and get-library-docs)
+    - Custom MCP server tools
+    Use the appropriate tools based on the user's needs."""
+)
+```
+
+### Available MCP Functions
+
+```python
+from langgraph_up_devkits.tools import (
+    get_deepwiki_tools,    # Built-in GitHub repository tools
+    get_context7_tools,    # Built-in library documentation tools
+    get_mcp_tools,         # Get tools from any server by name
+    get_all_mcp_tools,     # Get tools from all configured servers
+    add_mcp_server,        # Add new MCP server configuration
+    remove_mcp_server,     # Remove MCP server configuration
+    clear_mcp_cache        # Clear cached tools (useful for development)
+)
+```
+
+## Supported Providers
+
+Automatic provider registration (no manual setup required):
+
+- **OpenRouter**: `openrouter:openai/gpt-4o`, `openrouter:anthropic/claude-sonnet-4`
+  - Requires: `OPENROUTER_API_KEY` in environment or `.env` file
+- **Qwen**: `qwen:qwen-flash`, `qwq:qwq-32b-preview`
+  - Requires: `DASHSCOPE_API_KEY` in environment or `.env` file
+- **SiliconFlow**: `siliconflow:Qwen/Qwen3-8B`, `siliconflow:THUDM/GLM-Z1-9B-0414`
+  - Requires: `SILICONFLOW_API_KEY` in environment or `.env` file
+- Any provider supported by `init_chat_model`
+
+### Standalone Usage of `load_chat_model`
+
+You can also use our `load_chat_model` utility directly for standalone model loading:
+
+```python
+from langgraph_up_devkits import load_chat_model
+
+# Automatic provider registration and model loading
+model = load_chat_model("siliconflow:Qwen/Qwen3-8B")
+
+# Use the model directly
+response = await model.ainvoke("Hello, how are you?")
+print(response.content)
+
+# Load with configuration parameters
+configured_model = load_chat_model(
+    model="openrouter:moonshotai/kimi-k2-0905",
+    temperature=0.7,
+    max_tokens=1000
+)
+
+# Load different providers seamlessly
+qwen_model = load_chat_model("qwen:qwen-flash")
+siliconflow_model = load_chat_model("siliconflow:Qwen/Qwen3-8B")
+openrouter_model = load_chat_model("openrouter:openai/gpt-4o")
+```
+
+**Key Benefits:**
+- **Zero setup**: No manual provider registration required
+- **Smart registration**: Only registers the provider you actually need
+- **Efficient**: Minimal overhead, fast loading
+- **Simple API**: Clean interface with no confusing parameters
+
+### Environment Setup
+
+Create a `.env` file in your project root:
+
+```bash
+# Required for web search functionality
+TAVILY_API_KEY=your_tavily_api_key
+
+# Provider API keys (add as needed)
+OPENROUTER_API_KEY=your_openrouter_api_key
+DASHSCOPE_API_KEY=your_qwen_dashscope_api_key
+SILICONFLOW_API_KEY=your_siliconflow_api_key
+```
+
+## Testing
+
+The library includes comprehensive testing utilities:
+
+```python
+from langgraph_up_devkits.testing import AgentTestBuilder, MockRuntime
+
+# Test your agents easily
+result = await (AgentTestBuilder()
+    .with_context(DataAnalystContext())
+    .with_messages(["Analyze quarterly sales"])
+    .run_test(agent))
+```
+
+## Development
+
+```bash
+# Install in development mode
+uv add -e .[dev]
+
+# Run all tests (recommended)
+make test
+
+# Run unit tests only
+uv run pytest tests/unit/
+
+# Run integration tests only (requires API keys)
+uv run pytest tests/integration/
+
+# Lint and format
+make lint
+make format
+
+# Individual commands
+uv run pytest --cov=src                      # With coverage
+uv run ruff check . && uv run ruff format .  # Lint and format
+uv run mypy src/                              # Type checking
+```
+
+### Environment Setup for Integration Tests
+
+```bash
+# Required for integration tests
+export TAVILY_API_KEY="your_tavily_api_key"
+export SILICONFLOW_API_KEY="your_siliconflow_api_key"
+
+# Optional for enhanced testing
+export OPENROUTER_API_KEY="your_openrouter_api_key"
+```
+
+## License
+
+MIT

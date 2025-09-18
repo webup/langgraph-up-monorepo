@@ -1,23 +1,21 @@
 [project]
-name = "python-monorepo-example"
-version = "0.0.1"
+name = "langgraph-up-monorepo"
+version = "0.1.0"
 description = "A Python monorepo example with LangGraph agents and shared packages"
 authors = [
-    { name = "Developer", email = "dev@example.com" },
+    { name = "Haili Zhang", email = "haili.zhang@outlook.com" },
 ]
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
 requires-python = ">=3.11,<4.0"
 dependencies = [
-    "langgraph>=0.6.0,<0.7.0",
-    "langchain-core>=0.2.14",
 ]
 
 [tool.uv.workspace]
-members = ["apps/*", "libs/shared"]
+members = ["apps/*", "libs/langgraph-up-devkits"]
 
 [tool.uv.sources]
-shared = { workspace = true }
+langgraph-up-devkits = { workspace = true }
 
 [project.optional-dependencies]
 dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
@@ -26,7 +24,24 @@ dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
 requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[dependency-groups]
+dev = [
+    "langgraph-cli[inmem]>=0.4.2",
+    "mypy>=1.18.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.15.0",
+    "pytest-xdist>=3.8.0",
+    "python-dotenv>=1.1.1",
+    "ruff>=0.13.0",
+]
+
+[tool.setuptools]
+packages = []
+
 [tool.ruff]
+line-length = 120
 lint.select = [
     "E",    # pycodestyle
     "F",    # pyflakes

@@ -138,6 +138,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# ruff
+.ruff_cache/
+
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -169,3 +172,6 @@ cython_debug/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# LangGraph
+.langgraph_api/
