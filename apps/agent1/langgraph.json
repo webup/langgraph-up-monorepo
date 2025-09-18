@@ -1,7 +1,0 @@
-{
-  "dependencies": [".", "../../libs/shared", "../../libs/common"],
-  "graphs": {
-    "agent": "./src/agent1/graph.py:graph"
-  },
-  "env": ".env"
-}
