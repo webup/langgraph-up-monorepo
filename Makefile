@@ -1,4 +1,4 @@
-.PHONY: all format lint test test_integration lint_libs lint_apps format_libs format_apps test_libs test_apps test_integration_libs test_integration_apps help
+.PHONY: all format lint test test_integration lint_libs lint_apps format_libs format_apps test_libs test_apps test_integration_libs test_integration_apps unit integration dev help
 
 # Default target executed when no arguments are given to make.
 all: help
@@ -103,6 +103,69 @@ test_integration_apps:
 	$(call run_integration_tests,apps)
 
 ######################
+# PARAMETERIZED TESTING
+######################
+
+# Parameterized test targets that accept app names
+# Usage: make unit agent1, make integration agent1
+unit:
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		echo "Usage: make unit <app_name>"; \
+		echo "Example: make unit sample-agent"; \
+		exit 1; \
+	fi
+	@app_name=$(filter-out $@,$(MAKECMDGOALS)); \
+	if [ -d "apps/$$app_name" ]; then \
+		echo "Running unit tests for apps/$$app_name..."; \
+		cd "apps/$$app_name" && uv run python -m pytest tests/unit/ -v; \
+	else \
+		echo "❌ App 'apps/$$app_name' not found"; \
+		exit 1; \
+	fi
+
+integration:
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		echo "Usage: make integration <app_name>"; \
+		echo "Example: make integration sample-agent"; \
+		exit 1; \
+	fi
+	@app_name=$(filter-out $@,$(MAKECMDGOALS)); \
+	if [ -d "apps/$$app_name" ]; then \
+		echo "Running integration tests for apps/$$app_name..."; \
+		cd "apps/$$app_name" && uv run python -m pytest tests/integration/ -v; \
+	else \
+		echo "❌ App 'apps/$$app_name' not found"; \
+		exit 1; \
+	fi
+
+dev:
+	@goals="$(filter-out $@,$(MAKECMDGOALS))"; \
+	if [ -z "$$goals" ]; then \
+		echo "Usage: make dev <app_name> [-- args...]"; \
+		echo "   or: ./scripts/dev.sh <app_name> [args...] (direct usage)"; \
+		echo "Example: make dev sample-agent"; \
+		echo "Example: make dev sample-agent -- --no-browser"; \
+		echo "Example: make dev sample-agent -- --host 0.0.0.0 --port 3000"; \
+		echo "Example: ./scripts/dev.sh sample-agent --no-browser"; \
+		exit 1; \
+	fi; \
+	case "$$goals" in \
+		*" -- "*) \
+			app_name=$${goals%% -- *}; \
+			dev_args=$${goals#* -- }; \
+			./scripts/dev.sh $$app_name $$dev_args; \
+			;; \
+		*) \
+			app_name="$$goals"; \
+			./scripts/dev.sh $$app_name; \
+			;; \
+	esac
+
+# Dummy targets to prevent make from complaining about unknown targets
+%:
+	@:
+
+######################
 # LINTING AND FORMATTING
 ######################
 
@@ -149,3 +212,8 @@ help:
 	@echo 'lint_apps                    - lint apps/ packages only'
 	@echo 'format_libs                  - format libs/ packages only'
 	@echo 'format_apps                  - format apps/ packages only'
+	@echo ''
+	@echo 'PARAMETERIZED TARGETS:'
+	@echo 'make unit <app_name>         - run unit tests for specific app (e.g., make unit sample-agent)'
+	@echo 'make integration <app_name>  - run integration tests for specific app (e.g., make integration agent1)'
+	@echo 'make dev <app_name> [DEVARGS] - start LangGraph dev server (e.g., make dev agent1 DEVARGS=\"--no-browser\")'
