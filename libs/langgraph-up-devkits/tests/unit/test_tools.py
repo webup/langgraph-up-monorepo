@@ -14,6 +14,7 @@ from langgraph_up_devkits.tools import (
     get_mcp_client,
     get_mcp_tools,
     remove_mcp_server,
+    think_tool,
     web_search,
 )
 from langgraph_up_devkits.tools.search import _get_tavily_client
@@ -716,3 +717,20 @@ class TestProviderRegistrationUnit:
             assert region == "us"
 
         print("✅ Environment variable handling unit test passed")
+
+
+
+class TestThinkTool:
+    """Test strategic reflection tool."""
+
+    def test_think_tool_metadata(self):
+        """Think tool exposes expected LangChain metadata."""
+        assert think_tool is not None
+        assert think_tool.name == "think_tool"
+        assert "strategic reflection" in (think_tool.description or "").lower()
+
+    def test_think_tool_invocation(self):
+        """Think tool returns confirmation with reflection content."""
+        reflection = "Analyzed search results and identified knowledge gaps."
+        result = think_tool.invoke({"reflection": reflection})
+        assert result == f"Reflection recorded: {reflection}"

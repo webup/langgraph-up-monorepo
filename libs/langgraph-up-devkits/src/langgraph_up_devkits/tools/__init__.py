@@ -13,6 +13,7 @@ from .mcp import (
     remove_mcp_server,
 )
 from .search import web_search
+from .think import think_tool
 
 __all__ = [
     # HTTP tools
@@ -30,4 +31,6 @@ __all__ = [
     "add_mcp_server",
     "remove_mcp_server",
     "clear_mcp_cache",
+    # Reflection tools
+    "think_tool",
 ]

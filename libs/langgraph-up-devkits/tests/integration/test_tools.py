@@ -12,7 +12,13 @@ from langchain.agents import create_agent
 from langchain_core.messages import AnyMessage, HumanMessage
 
 from langgraph_up_devkits.context import SearchContext
-from langgraph_up_devkits.tools import fetch_url, get_context7_tools, get_deepwiki_tools, web_search
+from langgraph_up_devkits.tools import (
+    fetch_url,
+    get_context7_tools,
+    get_deepwiki_tools,
+    think_tool,
+    web_search,
+)
 from langgraph_up_devkits.utils import load_chat_model
 
 # Skip integration tests if no API keys
@@ -366,4 +372,92 @@ async def test_agent_with_context7_tools():
     print("✅ Context7 MCP tools integration working correctly")
 
 
+def test_think_tool_reflection_roundtrip():
+    """Think tool returns confirmation containing reflection text."""
+    reflection = "Validated search findings and noted missing context."
+    result = think_tool.invoke({"reflection": reflection})
+    assert result == f"Reflection recorded: {reflection}"
 
+
+@pytest.mark.asyncio
+async def test_agent_with_think_tool_integration():
+    """Test agent with think tool in a real reflection workflow."""
+    # Load model
+    model = load_chat_model(
+        model="siliconflow:Qwen/Qwen3-8B",
+        temperature=0.3,
+        max_tokens=300
+    )
+
+    # Create agent with think tool and web search for a realistic reflection scenario
+    agent = create_agent(
+        model=model,
+        tools=[think_tool, web_search],
+        prompt="""You are a helpful research assistant. When conducting research:
+        1. First search for information
+        2. Use the think_tool to reflect on what you found and plan next steps
+        3. Continue research if needed or provide final answer
+
+        Always use the think_tool after getting search results to analyze findings.""",
+        context_schema=SearchContext
+    )
+
+    context = SearchContext(max_search_results=2)
+
+    # Test agent with a research task that would naturally use reflection
+    result = await agent.ainvoke(
+        {"messages": [HumanMessage(content="""
+            Research Python's GIL (Global Interpreter Lock). After your search,
+            use the think_tool to reflect on what you found before providing a summary.
+        """)]},
+        context=context
+    )
+
+    # Verify response structure
+    assert isinstance(result, dict)
+    assert "messages" in result
+    assert len(result["messages"]) > 0
+
+    # Check for tool calls and tool messages - look for evidence of both tools
+    think_tool_used = False
+    web_search_used = False
+
+    for msg in result["messages"]:
+        # Check for AI messages with tool calls
+        if hasattr(msg, 'tool_calls') and msg.tool_calls:
+            for tool_call in msg.tool_calls:
+                tool_name = getattr(tool_call, 'name', None) or getattr(tool_call, '__name__', '')
+                if tool_name == 'think_tool':
+                    think_tool_used = True
+                elif tool_name == 'web_search':
+                    web_search_used = True
+
+        # Check for tool messages (responses from tools)
+        if hasattr(msg, 'content') and isinstance(msg.content, str):
+            content = msg.content
+            # Look for characteristic responses from our tools
+            if "Reflection recorded:" in content:
+                think_tool_used = True
+            elif "query" in content and ("answer" in content or "follow_up_questions" in content):
+                # This looks like a web search response
+                web_search_used = True
+
+    if not (think_tool_used and web_search_used):
+        # Print debug info
+        print("Tool usage analysis:")
+        for i, msg in enumerate(result["messages"]):
+            if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                for tool_call in msg.tool_calls:
+                    tool_name = getattr(tool_call, 'name', None) or getattr(tool_call, '__name__', 'unknown')
+                    print(f"  Message {i}: Used tool '{tool_name}'")
+            else:
+                content_preview = getattr(msg, 'content', 'NO_CONTENT')
+                if isinstance(content_preview, str):
+                    content_preview = content_preview[:100]
+                print(f"  Message {i}: {type(msg).__name__} - {content_preview}")
+
+    # Assert that both tools were used in a realistic research workflow
+    assert web_search_used, "Agent should use web_search for research"
+    assert think_tool_used, "Agent should use think_tool for reflection after search"
+
+    print("✅ Think tool integration with real agent working correctly")
