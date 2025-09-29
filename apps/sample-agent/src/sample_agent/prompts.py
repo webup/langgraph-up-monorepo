@@ -1,4 +1,4 @@
-"""Prompt templates for Agent1."""
+"""Prompt templates for sample-agent."""
 
 SUPERVISOR_PROMPT = (
     "You are a team supervisor managing a research expert and a math expert. "

@@ -107,7 +107,7 @@ test_integration_apps:
 ######################
 
 # Parameterized test targets that accept app names
-# Usage: make unit agent1, make integration agent1
+# Usage: make unit sample-agent, make integration sample-deep-agent
 unit:
 	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
 		echo "Usage: make unit <app_name>"; \
@@ -215,5 +215,5 @@ help:
 	@echo ''
 	@echo 'PARAMETERIZED TARGETS:'
 	@echo 'make unit <app_name>         - run unit tests for specific app (e.g., make unit sample-agent)'
-	@echo 'make integration <app_name>  - run integration tests for specific app (e.g., make integration agent1)'
-	@echo 'make dev <app_name> [DEVARGS] - start LangGraph dev server (e.g., make dev agent1 DEVARGS=\"--no-browser\")'
+	@echo 'make integration <app_name>  - run integration tests for specific app (e.g., make integration sample-agent)'
+	@echo 'make dev <app_name> [DEVARGS] - start LangGraph dev server (e.g., make dev sample-agent DEVARGS=\"--no-browser\")'

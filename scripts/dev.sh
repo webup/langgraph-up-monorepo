@@ -7,9 +7,9 @@ set -e
 
 if [ $# -eq 0 ]; then
     echo "Usage: ./scripts/dev.sh <app_name> [args...]"
-    echo "Example: ./scripts/dev.sh agent1"
-    echo "Example: ./scripts/dev.sh agent1 --port 8080"
-    echo "Example: ./scripts/dev.sh agent1 --host 0.0.0.0 --port 3000 --no-browser"
+    echo "Example: ./scripts/dev.sh sample-agent"
+    echo "Example: ./scripts/dev.sh sample-agent --port 8080"
+    echo "Example: ./scripts/dev.sh sample-agent --host 0.0.0.0 --port 3000 --no-browser"
     exit 1
 fi
 

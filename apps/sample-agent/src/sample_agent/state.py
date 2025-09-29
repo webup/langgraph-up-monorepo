@@ -7,7 +7,7 @@ from langgraph.graph.message import add_messages
 
 
 class AgentState(TypedDict):
-    """Simple state for Agent1 with task description support."""
+    """Simple state for sample-agent with task description support."""
 
     # Core message history
     messages: Annotated[list[BaseMessage], add_messages]

@@ -223,7 +223,7 @@ app = graph
 from langgraph_supervisor import create_supervisor
 
 supervisor = create_supervisor(
-    agents=[agent1, agent2],
+    agents=[math_agent, research_agent],
     model=model,
     prompt="You coordinate between agents..."
 )
