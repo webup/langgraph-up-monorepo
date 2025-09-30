@@ -2,6 +2,7 @@
 
 **LangGraph-UP Monorepo** showcases how to build production-ready LangGraph agents using the latest **LangChain & LangGraph** V1 ecosystem, organized in a clean monorepo structure with shared libraries and multiple agent applications.
 
+[![Version](https://img.shields.io/badge/version-v0.2.0-blue.svg)](https://github.com/webup/langgraph-up-monorepo/releases/tag/v0.2.0)
 [![LangChain](https://img.shields.io/badge/LangChain-v1alpha-blue.svg)](https://github.com/langchain-ai/langchain)
 [![LangGraph](https://img.shields.io/badge/LangGraph-v1alpha-blue.svg)](https://github.com/langchain-ai/langgraph)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
