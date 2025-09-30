@@ -7,6 +7,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from langgraph_up_devkits import load_chat_model
 
+from sample_agent.context import SupervisorContext
 from sample_agent.prompts import RESEARCH_EXPERT_PROMPT
 
 from ..tools.basic import web_search
@@ -24,11 +25,13 @@ def make_graph(config: RunnableConfig | None = None) -> CompiledStateGraph[Any, 
     if config is None:
         config = {}
 
+    # Convert runnable config to context
     configurable = config.get("configurable", {})
-    model_name = configurable.get("model_name", "openrouter:anthropic/claude-sonnet-4")
+    context_kwargs = {k: v for k, v in configurable.items() if k in SupervisorContext.model_fields}
+    context = SupervisorContext(**context_kwargs)
 
     # Load model based on configuration
-    model = load_chat_model(model_name)
+    model = load_chat_model(context.model_name)
 
     # Create and return the research agent directly
     agent = create_agent(

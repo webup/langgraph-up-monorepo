@@ -156,7 +156,7 @@ class TestBasicWorkflow:
         # Verify calls - now config is passed to make_graph functions
         mock_math_graph.assert_called_once_with({})
         mock_research_graph.assert_called_once_with({})
-        mock_load_model.assert_called_once_with("openrouter:anthropic/claude-sonnet-4")
+        mock_load_model.assert_called_once_with("siliconflow:zai-org/GLM-4.5-Air")
         mock_create_supervisor.assert_called_once()
         
         # Verify supervisor was called with correct agents

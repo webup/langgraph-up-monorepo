@@ -8,6 +8,7 @@ from langgraph_supervisor import create_supervisor
 from langgraph_supervisor.handoff import create_forward_message_tool
 from langgraph_up_devkits import load_chat_model
 
+from sample_agent.context import SupervisorContext
 from sample_agent.prompts import SUPERVISOR_PROMPT
 from sample_agent.state import AgentState
 from sample_agent.subagents import make_math_graph, make_research_graph
@@ -21,11 +22,13 @@ def make_graph(config: RunnableConfig | None = None) -> CompiledStateGraph[Any, 
     if config is None:
         config = {}
 
+    # Convert runnable config to context
     configurable = config.get("configurable", {})
-    model_name = configurable.get("model_name", "openrouter:anthropic/claude-sonnet-4")
+    context_kwargs = {k: v for k, v in configurable.items() if k in SupervisorContext.model_fields}
+    context = SupervisorContext(**context_kwargs)
 
     # Load model based on configuration
-    model = load_chat_model(model_name)
+    model = load_chat_model(context.model_name)
 
     # Create agents with the configured model via make_graph functions
     math_agent = make_math_graph(config)
@@ -54,4 +57,4 @@ def make_graph(config: RunnableConfig | None = None) -> CompiledStateGraph[Any, 
         output_mode="last_message",
         add_handoff_messages=True,
     )
-    return workflow.compile(name="supervisor")
+    return workflow.compile(name="supervisor").with_config({"recursion_limit": context.recursion_limit})
