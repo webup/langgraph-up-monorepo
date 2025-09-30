@@ -1,17 +1,19 @@
 # 🚀 LangGraph-UP Monorepo
 
-**LangGraph-UP Monorepo** is a batteries-included monorepo framework for building sophisticated LangGraph applications. Think "Next.js for LangGraph" - opinionated, enterprise-ready, and designed for developer productivity.
+**LangGraph-UP Monorepo** showcases how to build production-ready LangGraph agents using the latest **LangChain & LangGraph** V1 ecosystem, organized in a clean monorepo structure with shared libraries and multiple agent applications.
 
-[![CI](https://github.com/webup/langgraph-up-monorepo/workflows/CI/badge.svg)](https://github.com/your-org/langgraph-up-monorepo/actions)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![UV](https://img.shields.io/badge/uv-package%20manager-green.svg)](https://github.com/astral-sh/uv)
+[![LangChain](https://img.shields.io/badge/LangChain-v1alpha-blue.svg)](https://github.com/langchain-ai/langchain)
+[![LangGraph](https://img.shields.io/badge/LangGraph-v1alpha-blue.svg)](https://github.com/langchain-ai/langgraph)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![PyPI](https://img.shields.io/badge/PyPI-langgraph--up--devkits-blue.svg)](https://test.pypi.org/project/langgraph-up-devkits/)
+[![Twitter](https://img.shields.io/twitter/follow/zhanghaili0610?style=social)](https://twitter.com/zhanghaili0610)
 
 ## ✨ Key Features
 
 - 🌐 **Universal Model Loading** - OpenRouter, Qwen, QwQ, SiliconFlow with automatic registration
-- 🤖 **Multi-Agent Orchestration** - Supervisor patterns, handoffs, and collaboration workflows
-- 🛠 **Production Middleware** - Summarization, context management, error handling
-- 🧪 **Developer Experience** - Hot reload, comprehensive testing, strict linting
+- 🤖 **Multi-Agent Orchestration** - Supervisor & deep research patterns with specialized sub-agents
+- 🛠 **Custom Middleware** - Model switching, file masking, summarization, and state management
+- 🧪 **Developer Experience** - Hot reload, comprehensive testing, strict linting, PyPI publishing
 - 🚀 **Deployment Ready** - LangGraph Cloud configurations included
 - 🌍 **Global Ready** - Region-based provider configuration (PRC/International)
 
@@ -24,9 +26,9 @@
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone and setup
-git clone https://github.com/your-org/langgraph-up-monorepo.git
+git clone https://github.com/webup/langgraph-up-monorepo.git
 cd langgraph-up-monorepo
-uv sync
+uv sync --dev
 ```
 
 ### 30-Second Demo
@@ -46,15 +48,36 @@ app = make_graph()
 result = await app.ainvoke({"messages": [{"role": "user", "content": "What's 25 * 4?"}]})
 ```
 
-### Run Sample Agent
+### Sample Agents
+
+This monorepo includes two complete agent examples demonstrating different patterns:
+
+#### 🤖 sample-agent: Supervisor Pattern
+Multi-agent system with a coordinator that delegates to specialized sub-agents.
 
 ```bash
-# Start development server
 make dev sample-agent
-
-# Or without browser
-make dev sample-agent -- --no-browser
 ```
+
+**Features:**
+- Supervisor-based coordination
+- Math expert (add, multiply operations)
+- Research expert (web search capabilities)
+- Cross-agent handoffs
+
+#### 🔬 sample-deep-agent: Deep Research Pattern
+Advanced research workflow with virtual file system and structured planning.
+
+```bash
+make dev sample-deep-agent
+```
+
+**Features:**
+- Deep web search with content extraction
+- Virtual file system for document management
+- Think tool for strategic TODO planning
+- Research & critique sub-agents
+- FileSystemMaskMiddleware to optimize token usage
 
 ## 🏗 Architecture
 
@@ -65,20 +88,27 @@ langgraph-up-monorepo/
 ├── libs/
 │   ├── shared/                    # Shared utilities
 │   ├── common/                    # Common helper functions
-│   └── langgraph-up-devkits/      # 🎯 Core framework
+│   └── langgraph-up-devkits/      # 🎯 Core framework (published to PyPI)
 │       ├── utils/providers.py     #   → Multi-provider model loading
-│       ├── middleware/            #   → Production middleware
-│       ├── tools/                 #   → Web search, fetch, MCP
-│       └── context.py             #   → Context-aware prompts
+│       ├── middleware/            #   → Custom middleware (model, file, summary)
+│       ├── tools/                 #   → Web search, deep search, MCP integration
+│       └── context/               #   → Context schemas & aware prompts
 ├── apps/
-│   └── sample-agent/              # 🤖 Multi-agent supervisor example
-│       ├── src/sample_agent/
-│       │   ├── graph.py           #   → Main supervisor graph
-│       │   ├── subagents/         #   → Math & research experts
-│       │   └── tools/             #   → Agent-specific tools
+│   ├── sample-agent/              # 🤖 Supervisor pattern (math + research agents)
+│   │   ├── src/sample_agent/
+│   │   │   ├── graph.py           #   → Main supervisor graph
+│   │   │   ├── subagents/         #   → Math & research experts
+│   │   │   └── tools/             #   → Agent-specific tools
+│   │   └── langgraph.json         #   → Deployment config
+│   └── sample-deep-agent/         # 🔬 Deep research pattern (VFS + think tool)
+│       ├── src/sample_deep_agent/
+│       │   ├── graph.py           #   → Deep agent with research workflow
+│       │   ├── subagents.py       #   → Research & critique experts
+│       │   └── prompts.py         #   → Structured TODO planning prompts
 │       └── langgraph.json         #   → Deployment config
 ├── pyproject.toml                 # Root dependencies
 ├── Makefile                       # Development commands
+├── PUBLISHING.md                  # PyPI publishing guide
 └── .github/workflows/             # CI/CD pipeline
 ```
 
@@ -125,25 +155,37 @@ research_to_math = create_handoff_tool("math_expert")
 
 #### 🔧 Custom Middleware (LangChain v1)
 
-Built-in middleware for dynamic model switching and behavior modification:
+Built-in middleware for dynamic model switching, state management, and behavior modification:
 
 ```python
 from langchain.agents import create_agent
-from langgraph_up_devkits import ModelProviderMiddleware, load_chat_model
+from langgraph_up_devkits import (
+    ModelProviderMiddleware,
+    FileSystemMaskMiddleware,
+    load_chat_model
+)
 
 # Model provider middleware for automatic switching
-middleware = ModelProviderMiddleware()
+model_middleware = ModelProviderMiddleware()
+
+# File system middleware to mask large file content from LLM context
+fs_middleware = FileSystemMaskMiddleware()
 
 agent = create_agent(
     model=load_chat_model("openrouter:gpt-4o"),  # Fallback model
-    tools=[web_search],
-    middleware=[middleware]  # Enables context-based model switching
+    tools=[web_search, deep_web_search],
+    middleware=[model_middleware, fs_middleware]
 )
 
 # Context specifies different model - middleware switches automatically
 context = {"model": "siliconflow:Qwen/Qwen3-8B"}
 result = await agent.ainvoke(messages, context=context)
 ```
+
+**Available Middleware:**
+- `ModelProviderMiddleware` - Dynamic model switching based on context
+- `FileSystemMaskMiddleware` - Masks virtual file systems from LLM to save tokens
+- `SummarizationMiddleware` - Automatic message summarization for long conversations
 
 For detailed documentation on additional features like middleware, tools, and utilities, see:
 
@@ -171,7 +213,15 @@ make format                 # Format code
 make dev sample-agent                    # Start dev server with browser
 make dev sample-agent -- --no-browser   # Start without browser
 make dev sample-agent -- --host 0.0.0.0 --port 3000  # Custom host/port
+
+# Publishing (langgraph-up-devkits)
+make build_devkits                       # Build distribution packages
+make check_devkits                       # Validate package
+make release_test_devkits               # Build and publish to Test PyPI
+make release_devkits                     # Build and publish to PyPI
 ```
+
+See [PUBLISHING.md](PUBLISHING.md) for detailed publishing guide.
 
 ### Project Structure Guidelines
 
