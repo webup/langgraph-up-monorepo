@@ -1,0 +1,7 @@
+{
+  "dependencies": ["../../libs/shared", "../../libs/common", "."],
+  "graphs": {
+    "agent": "./src/sample_deep_agent/graph.py:make_graph"
+  },
+  "env": ".env"
+}
