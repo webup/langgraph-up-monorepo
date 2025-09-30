@@ -18,24 +18,10 @@ class BaseAgentContext:
         },
     )
 
-    max_iterations: int = field(
-        default=10,
-        metadata={
-            "description": "Maximum number of agent iterations before stopping.",
-        },
-    )
-
     user_id: str | None = field(
         default=None,
         metadata={
             "description": "User ID for personalization and logging.",
-        },
-    )
-
-    session_id: str | None = field(
-        default=None,
-        metadata={
-            "description": "Session ID for conversation tracking.",
         },
     )
 
@@ -83,6 +69,13 @@ class SearchContext(BaseAgentContext):
         default=False,
         metadata={
             "description": "Whether to enable the DeepWiki MCP tool for accessing open source project documentation.",  # noqa: E501
+        },
+    )
+
+    include_raw_content: str = field(
+        default="markdown",
+        metadata={
+            "description": "Format for raw content inclusion in search results. Options: 'none', 'text', 'markdown'.",  # noqa: E501
         },
     )
 

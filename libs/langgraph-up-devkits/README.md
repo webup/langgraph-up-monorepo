@@ -74,10 +74,13 @@ result = await agent.ainvoke(
 ### Middleware
 
 - `ModelProviderMiddleware` - Automatic model provider switching
+- `FileSystemMaskMiddleware` - Shadows virtual file system from model context
 
 ### Tools
 
 - `web_search` - Context-aware web search using Tavily
+- `deep_web_search` - Advanced web search with depth control and context awareness
+- `think_tool` - Strategic reflection and planning tool for agents
 - `fetch_url` - HTTP content fetching with async support
 - `get_deepwiki_tools` - Built-in MCP integration for GitHub repository documentation
 - `get_context7_tools` - Built-in MCP integration for library documentation
@@ -100,9 +103,7 @@ from langgraph_up_devkits.context import BaseAgentContext, SearchContext
 # Basic agent context
 basic_context = BaseAgentContext(
     model="openrouter:openai/gpt-4o",
-    max_iterations=5,
-    user_id="user_123",
-    session_id="session_456"
+    user_id="user_123"
 )
 
 # Search-enabled context
@@ -155,6 +156,61 @@ agent_direct = create_agent(
     middleware=[middleware]  # Still useful for context-based switching
 )
 ```
+
+### FileSystemMaskMiddleware for Virtual File Systems
+
+The `FileSystemMaskMiddleware` automatically shadows the `files` field from the agent state before passing to the model, then restores it after the model execution. This is useful when you have virtual file systems in your state that should not be sent to the LLM.
+
+```python
+from typing import Annotated
+from langchain.agents import create_agent, AgentState
+from langchain.agents.middleware import AgentMiddleware
+from langchain_core.messages import HumanMessage, add_messages
+from langgraph_up_devkits.middleware import FileSystemMaskMiddleware
+
+# Define a middleware to extend state with files field
+class FilesStateMiddleware(AgentMiddleware[AgentState]):
+    """Middleware that extends state with files field."""
+
+    class FilesState(AgentState):  # type: ignore[type-arg]
+        """State with files field for virtual file system."""
+        messages: Annotated[list, add_messages]
+        files: dict  # Virtual file system - will be masked from model
+
+    state_schema = FilesState
+
+# Create both middlewares
+files_state_middleware = FilesStateMiddleware()
+filesystem_mask_middleware = FileSystemMaskMiddleware()
+
+# Create agent with both middlewares
+agent = create_agent(
+    model="openrouter:openai/gpt-4o",
+    tools=[],
+    prompt="You are a helpful assistant.",
+    middleware=[files_state_middleware, filesystem_mask_middleware]
+)
+
+# Use with files in state - files are masked from model but preserved in state
+result = await agent.ainvoke({
+    "messages": [HumanMessage(content="Hello")],
+    "files": {
+        "config.json": '{"setting": "value"}',
+        "data.csv": "name,age\\nAlice,30\\nBob,25"
+    }
+})
+
+# Files are restored in the result
+assert "files" in result
+assert result["files"]["config.json"] == '{"setting": "value"}'
+```
+
+**Key Features:**
+- **Automatic masking**: Removes `files` field before model execution
+- **Automatic restoration**: Restores original `files` after model execution
+- **Stateless**: Each middleware instance can handle sequential invocations
+- **Composable**: Works with other middlewares via middleware chaining
+- **Use case**: Prevents large file contents from consuming model context window
 
 ### Context-Aware Tools
 
@@ -222,7 +278,6 @@ research_context = ResearchContext(
     model="siliconflow:Qwen/Qwen3-8B",  # Switch to SiliconFlow
     max_search_results=10,
     enable_deepwiki=True,
-    max_iterations=15,
     user_id="researcher_001",
     thread_id="research_session_123"
 )

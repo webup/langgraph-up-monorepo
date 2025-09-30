@@ -15,7 +15,11 @@ from .context import (
     ResearchContext,
     SearchContext,
 )
-from .middleware import ModelProviderMiddleware, SummarizationMiddleware
+from .middleware import (
+    FileSystemMaskMiddleware,
+    ModelProviderMiddleware,
+    SummarizationMiddleware,
+)
 from .prompts import (
     DATA_ANALYST_PROMPT,
     RESEARCH_ASSISTANT_PROMPT,
@@ -25,6 +29,7 @@ from .tools import (
     MCP_SERVERS,
     add_mcp_server,
     clear_mcp_cache,
+    deep_web_search,
     fetch_url,
     get_all_mcp_tools,
     get_context7_tools,
@@ -32,6 +37,7 @@ from .tools import (
     get_mcp_client,
     get_mcp_tools,
     remove_mcp_server,
+    think_tool,
     web_search,
 )
 from .utils import (
@@ -52,11 +58,14 @@ __all__ = [
     "DataAnalystContext",
     "ResearchContext",
     # Middleware
+    "FileSystemMaskMiddleware",
     "ModelProviderMiddleware",
     "SummarizationMiddleware",
-    # HTTP tools
+    # HTTP and search tools
     "fetch_url",
     "web_search",
+    "deep_web_search",
+    "think_tool",
     # MCP tools
     "get_context7_tools",
     "get_deepwiki_tools",

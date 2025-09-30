@@ -12,14 +12,16 @@ from .mcp import (
     get_mcp_tools,
     remove_mcp_server,
 )
-from .search import web_search
+from .search import deep_web_search, web_search
 from .think import think_tool
 
 __all__ = [
     # HTTP tools
     "fetch_url",
-    # Search tools
+    # Search tools - Plain agents
     "web_search",
+    # Search tools - Deep agents
+    "deep_web_search",
     # MCP tools
     "get_context7_tools",
     "get_deepwiki_tools",

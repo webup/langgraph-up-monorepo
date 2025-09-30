@@ -251,9 +251,7 @@ class AgentTestBuilder:
         if not self.messages:
             self.messages = create_test_messages(["Test message"])
 
-        return await run_agent_test(
-            agent=agent, messages=self.messages, context=self.context
-        )
+        return await run_agent_test(agent=agent, messages=self.messages, context=self.context)
 
 
 # ===== PYTEST FIXTURES =====
@@ -287,9 +285,7 @@ def mock_web_search_tool():
     """Create mock web search tool."""
     return MockTool(
         name="web_search",
-        return_value={
-            "results": [{"title": "Test Result", "content": "Mock search result"}]
-        },
+        return_value={"results": [{"title": "Test Result", "content": "Mock search result"}]},
     )
 
 

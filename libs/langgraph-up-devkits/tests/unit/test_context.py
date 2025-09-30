@@ -19,12 +19,9 @@ class TestBaseAgentContext:
         """Test default context values."""
         context = BaseAgentContext()
         assert context.model == "openai:openai/gpt-4o"
-        assert context.max_iterations == 10
         assert context.user_id is None
 
-    @patch.dict(
-        os.environ, {"MODEL": "qwen:qwen-flash", "USER_ID": "test_user"}, clear=False
-    )
+    @patch.dict(os.environ, {"MODEL": "qwen:qwen-flash", "USER_ID": "test_user"}, clear=False)
     def test_env_var_loading(self):
         """Test environment variable loading."""
         context = BaseAgentContext()
@@ -122,22 +119,17 @@ class TestComposedContexts:
 
     def test_context_field_validation(self):
         """Test context field validation and type checking."""
-        # Test valid max_iterations
-        context = BaseAgentContext(max_iterations=5)
-        assert context.max_iterations == 5
-
         # Test valid max_search_results
         search_context = SearchContext(max_search_results=15)
         assert search_context.max_search_results == 15
 
     def test_context_serialization(self):
         """Test context can be serialized to dict."""
-        context = DataAnalystContext(
-            model="test-model", user_id="test-user", max_search_results=15
-        )
+        context = DataAnalystContext(model="test-model", user_id="test-user", max_search_results=15)
 
         # Should be serializable
         from dataclasses import asdict
+
         context_dict = asdict(context)
         assert isinstance(context_dict, dict)
         assert context_dict["model"] == "test-model"
@@ -163,17 +155,12 @@ class TestComposedContexts:
 
     def test_context_field_override_precedence(self):
         """Test that explicit values override environment and defaults."""
-        with patch.dict(
-            os.environ, {"MODEL": "env_model", "USER_ID": "env_user"}, clear=False
-        ):
+        with patch.dict(os.environ, {"MODEL": "env_model", "USER_ID": "env_user"}, clear=False):
             # Explicit values should win
-            context = BaseAgentContext(
-                model="explicit_model", user_id="explicit_user", max_iterations=15
-            )
+            context = BaseAgentContext(model="explicit_model", user_id="explicit_user")
 
             assert context.model == "explicit_model"
             assert context.user_id == "explicit_user"
-            assert context.max_iterations == 15
 
     def test_search_context_boolean_env_parsing(self):
         """Test boolean environment variable parsing for SearchContext."""
@@ -200,9 +187,7 @@ class TestComposedContexts:
         # BaseAgentContext defaults
         base_context = BaseAgentContext()
         assert base_context.model == "openai:openai/gpt-4o"
-        assert base_context.max_iterations == 10
         assert base_context.user_id is None
-        assert base_context.session_id is None
 
         # SearchContext defaults
         search_context = SearchContext()
@@ -309,14 +294,11 @@ class TestEnvironmentVariableHandling:
 
     def test_empty_env_vars(self):
         """Test behavior with empty environment variables."""
-        with patch.dict(
-            os.environ, {"MODEL": "", "USER_ID": "", "SESSION_ID": ""}, clear=False
-        ):
+        with patch.dict(os.environ, {"MODEL": "", "USER_ID": ""}, clear=False):
             context = BaseAgentContext()
             # Empty strings should be treated as None/default
             assert context.model == "openai:openai/gpt-4o"  # Default
             assert context.user_id is None
-            assert context.session_id is None
 
 
 class TestContextValidation:
@@ -337,9 +319,8 @@ class TestContextValidation:
 
     def test_positive_integer_fields(self):
         """Test that integer fields accept positive values."""
-        context = SearchContext(max_search_results=100, max_iterations=50)
+        context = SearchContext(max_search_results=100)
         assert context.max_search_results == 100
-        assert context.max_iterations == 50
 
     def test_zero_values_allowed(self):
         """Test that zero values are allowed for appropriate fields."""

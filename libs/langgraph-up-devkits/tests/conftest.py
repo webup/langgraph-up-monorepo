@@ -22,9 +22,7 @@ def event_loop():
 @pytest.fixture
 def base_context():
     """Create base agent context for testing."""
-    return BaseAgentContext(
-        model="openai:openai/gpt-4o", user_id="test_user", session_id="test_session"
-    )
+    return BaseAgentContext(model="openai:openai/gpt-4o", user_id="test_user")
 
 
 @pytest.fixture

@@ -31,10 +31,7 @@ class TestPromptUtils:
 
         # Data analyst prompt should have domain-specific content
         assert "data analyst" in DATA_ANALYST_PROMPT.lower()
-        assert any(
-            keyword in DATA_ANALYST_PROMPT.lower()
-            for keyword in ["data", "analysis", "dataset", "chart"]
-        )
+        assert any(keyword in DATA_ANALYST_PROMPT.lower() for keyword in ["data", "analysis", "dataset", "chart"])
 
         # Research assistant prompt should have research-related content
         assert "research" in RESEARCH_ASSISTANT_PROMPT.lower()
@@ -53,7 +50,6 @@ class TestPromptUtils:
         mock_context = Mock()
         mock_context.system_prompt = "You are a helpful assistant."
         mock_context.user_id = "test_user"
-        mock_context.session_id = "test_session"
         mock_context.enable_deepwiki = True
         mock_context.max_search_results = 10
         mock_context.max_data_rows = 1000
@@ -84,7 +80,6 @@ class TestPromptUtils:
         mock_context.system_prompt = "Basic assistant."
         # Other attributes return None
         mock_context.user_id = None
-        mock_context.session_id = None
         mock_context.enable_deepwiki = False
         mock_context.max_search_results = None
         mock_context.max_data_rows = None
@@ -118,9 +113,7 @@ class TestPromptUtils:
         assert "helpful assistant" in result[0].content.lower()
 
     @patch("langgraph_up_devkits.utils.prompts.get_runtime")
-    def test_create_context_aware_prompt_preserves_existing_messages(
-        self, mock_get_runtime
-    ):
+    def test_create_context_aware_prompt_preserves_existing_messages(self, mock_get_runtime):
         """Test that existing messages are preserved."""
         from langchain_core.messages import AIMessage, HumanMessage
 
@@ -149,9 +142,7 @@ class TestPromptUtils:
 
     @patch("langgraph_up_devkits.utils.prompts.get_runtime")
     @patch("langgraph_up_devkits.utils.prompts.datetime")
-    def test_create_context_aware_prompt_includes_timestamp(
-        self, mock_datetime, mock_get_runtime
-    ):
+    def test_create_context_aware_prompt_includes_timestamp(self, mock_datetime, mock_get_runtime):
         """Test that prompt includes current timestamp."""
         from langgraph_up_devkits.utils import create_context_aware_prompt
 
@@ -209,12 +200,8 @@ class TestProviderUtils:
         """Test successful Qwen provider registration."""
         with (
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch(
-                "langgraph_up_devkits.utils.providers.register_model_provider"
-            ) as mock_register,
-            patch(
-                "importlib.import_module"
-            ) as mock_import,
+            patch("langgraph_up_devkits.utils.providers.register_model_provider") as mock_register,
+            patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import _register_qwen_provider
 
@@ -228,17 +215,13 @@ class TestProviderUtils:
 
             assert result is True
             mock_import.assert_called_with("langchain_qwq")
-            assert (
-                mock_register.call_count >= 2
-            )  # At least 2 calls for ChatQwen and ChatQwQ
+            assert mock_register.call_count >= 2  # At least 2 calls for ChatQwen and ChatQwQ
 
     def test_qwen_provider_registration_import_error(self):
         """Test Qwen provider registration with import error."""
         with (
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch(
-                "importlib.import_module"
-            ) as mock_import,
+            patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import _register_qwen_provider
 
@@ -253,12 +236,8 @@ class TestProviderUtils:
         with (
             patch.dict("os.environ", {"REGION": "prc"}),
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch(
-                "langgraph_up_devkits.utils.providers.register_model_provider"
-            ) as mock_register,
-            patch(
-                "importlib.import_module"
-            ) as mock_import,
+            patch("langgraph_up_devkits.utils.providers.register_model_provider") as mock_register,
+            patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import _register_qwen_provider
 
@@ -272,9 +251,7 @@ class TestProviderUtils:
 
             assert result is True
             # Should register with base_url for PRC region
-            calls_with_base_url = [
-                call for call in mock_register.call_args_list if "base_url" in str(call)
-            ]
+            calls_with_base_url = [call for call in mock_register.call_args_list if "base_url" in str(call)]
             assert len(calls_with_base_url) > 0
 
     def test_siliconflow_provider_registration(self):
@@ -282,12 +259,8 @@ class TestProviderUtils:
         with (
             patch.dict("os.environ", {}, clear=True),  # Clear REGION env var
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch(
-                "langgraph_up_devkits.utils.providers.register_model_provider"
-            ),
-            patch(
-                "importlib.import_module"
-            ) as mock_import,
+            patch("langgraph_up_devkits.utils.providers.register_model_provider"),
+            patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import (
                 _register_siliconflow_provider,
@@ -310,12 +283,8 @@ class TestProviderUtils:
         with (
             patch.dict("os.environ", {}, clear=True),  # Clear REGION env var
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch(
-                "langgraph_up_devkits.utils.providers.register_model_provider"
-            ) as mock_register,
-            patch(
-                "importlib.import_module"
-            ) as mock_import,
+            patch("langgraph_up_devkits.utils.providers.register_model_provider") as mock_register,
+            patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import (
                 _register_siliconflow_provider,
@@ -343,12 +312,8 @@ class TestProviderUtils:
         with (
             patch.dict("os.environ", {"REGION": "prc"}),
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch(
-                "langgraph_up_devkits.utils.providers.register_model_provider"
-            ) as mock_register,
-            patch(
-                "importlib.import_module"
-            ) as mock_import,
+            patch("langgraph_up_devkits.utils.providers.register_model_provider") as mock_register,
+            patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import (
                 _register_siliconflow_provider,
@@ -378,12 +343,8 @@ class TestProviderUtils:
         with (
             patch.dict("os.environ", {"REGION": "international"}),
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch(
-                "langgraph_up_devkits.utils.providers.register_model_provider"
-            ) as mock_register,
-            patch(
-                "importlib.import_module"
-            ) as mock_import,
+            patch("langgraph_up_devkits.utils.providers.register_model_provider") as mock_register,
+            patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import (
                 _register_siliconflow_provider,
@@ -413,12 +374,8 @@ class TestProviderUtils:
         with (
             patch.dict("os.environ", {}, clear=True),  # Clear all env vars
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch(
-                "langgraph_up_devkits.utils.providers.register_model_provider"
-            ) as mock_register,
-            patch(
-                "importlib.import_module"
-            ) as mock_import,
+            patch("langgraph_up_devkits.utils.providers.register_model_provider") as mock_register,
+            patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import (
                 _register_siliconflow_provider,
@@ -448,9 +405,7 @@ class TestProviderUtils:
         result = _register_openrouter_provider()
 
         assert result is True
-        mock_register.assert_called_with(
-            "openrouter", "openai", base_url="https://openrouter.ai/api/v1"
-        )
+        mock_register.assert_called_with("openrouter", "openai", base_url="https://openrouter.ai/api/v1")
 
     @patch("langgraph_up_devkits.utils.providers._register_qwen_provider")
     @patch("langgraph_up_devkits.utils.providers._register_siliconflow_provider")

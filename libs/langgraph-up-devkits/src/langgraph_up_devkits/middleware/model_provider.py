@@ -2,9 +2,8 @@
 
 from typing import Any
 
-from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware, ModelRequest
-from langgraph.runtime import get_runtime
+from langgraph.runtime import Runtime
 
 from ..utils.providers import load_chat_model
 
@@ -38,13 +37,11 @@ class ModelProviderMiddleware(AgentMiddleware[Any]):
         if self.debug:
             print(f"ModelProviderMiddleware: {message}")
 
-    def modify_model_request(self, request: ModelRequest, state: AgentState) -> ModelRequest:
+    def modify_model_request(self, request: ModelRequest, state: Any, runtime: Runtime[None]) -> ModelRequest:
         """Load model using our load_chat_model utility with automatic provider registration."""
         self._log(f"Processing model request: {request.model} (type: {type(request.model)})")
 
         try:
-            runtime = get_runtime()
-
             # Check if runtime context has a model specification
             model_spec = getattr(runtime.context, "model", None)
             self._log(f"Context model spec: {model_spec}")

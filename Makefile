@@ -1,4 +1,4 @@
-.PHONY: all format lint test test_integration lint_libs lint_apps format_libs format_apps test_libs test_apps test_integration_libs test_integration_apps unit integration dev help
+.PHONY: all format lint test test_integration lint_libs lint_apps format_libs format_apps test_libs test_apps test_integration_libs test_integration_apps unit integration dev build_devkits check_devkits publish_test_devkits publish_devkits release_test_devkits release_devkits help
 
 # Default target executed when no arguments are given to make.
 all: help
@@ -191,6 +191,50 @@ format_apps:
 
 
 ######################
+# PUBLISHING
+######################
+
+# Build distribution packages for langgraph-up-devkits
+build_devkits:
+	@echo "Building langgraph-up-devkits distribution packages..."
+	@cd libs/langgraph-up-devkits && \
+		rm -rf dist/ build/ *.egg-info && \
+		uv run python -m build
+	@echo "✅ Build complete. Packages in libs/langgraph-up-devkits/dist/"
+
+# Upload to Test PyPI
+publish_test_devkits:
+	@echo "Uploading langgraph-up-devkits to Test PyPI..."
+	@cd libs/langgraph-up-devkits && \
+		uv run python -m twine upload --repository testpypi dist/*
+	@echo "✅ Uploaded to Test PyPI"
+	@echo "Install with: pip install --index-url https://test.pypi.org/simple/ langgraph-up-devkits"
+
+# Upload to Production PyPI
+publish_devkits:
+	@echo "⚠️  WARNING: About to publish to Production PyPI"
+	@echo "Press Ctrl+C to cancel, or Enter to continue..."
+	@read dummy
+	@cd libs/langgraph-up-devkits && \
+		uv run python -m twine upload dist/*
+	@echo "✅ Published to PyPI"
+	@echo "Install with: pip install langgraph-up-devkits"
+
+# Build and publish to Test PyPI (convenience target)
+release_test_devkits: build_devkits publish_test_devkits
+
+# Build and publish to Production PyPI (convenience target)
+release_devkits: build_devkits publish_devkits
+
+# Check package before publishing
+check_devkits:
+	@echo "Checking langgraph-up-devkits package..."
+	@cd libs/langgraph-up-devkits && \
+		uv run python -m twine check dist/*
+	@echo "✅ Package check complete"
+
+
+######################
 # HELP
 ######################
 
@@ -217,3 +261,11 @@ help:
 	@echo 'make unit <app_name>         - run unit tests for specific app (e.g., make unit sample-agent)'
 	@echo 'make integration <app_name>  - run integration tests for specific app (e.g., make integration sample-agent)'
 	@echo 'make dev <app_name> [DEVARGS] - start LangGraph dev server (e.g., make dev sample-agent DEVARGS=\"--no-browser\")'
+	@echo ''
+	@echo 'PUBLISHING TARGETS:'
+	@echo 'build_devkits                - build distribution packages for langgraph-up-devkits'
+	@echo 'check_devkits                - check package validity with twine'
+	@echo 'publish_test_devkits         - upload to Test PyPI (requires build first)'
+	@echo 'publish_devkits              - upload to Production PyPI (requires build first, with confirmation)'
+	@echo 'release_test_devkits         - build and publish to Test PyPI'
+	@echo 'release_devkits              - build and publish to Production PyPI'

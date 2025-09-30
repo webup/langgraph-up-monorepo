@@ -66,9 +66,7 @@ class TestPromptTemplates:
         """Test that prompts have reasonable lengths."""
         # All prompts should be substantial but not excessively long
         for prompt in [SYSTEM_PROMPT, DATA_ANALYST_PROMPT, RESEARCH_ASSISTANT_PROMPT]:
-            assert 50 < len(prompt) < 1000, (
-                f"Prompt length should be reasonable: {len(prompt)}"
-            )
+            assert 50 < len(prompt) < 1000, f"Prompt length should be reasonable: {len(prompt)}"
 
 
 class TestCreateContextAwarePrompt:
@@ -83,7 +81,6 @@ class TestCreateContextAwarePrompt:
         # Default context attributes
         self.mock_context.system_prompt = "You are a helpful assistant."
         self.mock_context.user_id = None
-        self.mock_context.session_id = None
         self.mock_context.enable_deepwiki = False
         self.mock_context.max_search_results = None
         self.mock_context.max_data_rows = None
@@ -109,7 +106,6 @@ class TestCreateContextAwarePrompt:
     def test_context_with_user_info(self, mock_get_runtime):
         """Test prompt creation with user information."""
         self.mock_context.user_id = "test_user_123"
-        self.mock_context.session_id = "session_456"
         mock_get_runtime.return_value = self.mock_runtime
 
         state = {"messages": []}
@@ -117,7 +113,6 @@ class TestCreateContextAwarePrompt:
 
         system_content = result[0].content
         assert "User ID: test_user_123" in system_content
-        assert "Session ID: session_456" in system_content
 
     @patch("langgraph_up_devkits.utils.prompts.get_runtime")
     def test_context_with_tool_info(self, mock_get_runtime):
@@ -199,7 +194,6 @@ class TestCreateContextAwarePrompt:
     def test_none_values_handling(self, mock_get_runtime):
         """Test handling of None values in context attributes."""
         self.mock_context.user_id = None
-        self.mock_context.session_id = None
         self.mock_context.max_search_results = None
         self.mock_context.max_data_rows = None
         mock_get_runtime.return_value = self.mock_runtime

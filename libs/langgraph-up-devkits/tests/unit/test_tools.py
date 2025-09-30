@@ -8,6 +8,7 @@ from langgraph_up_devkits.tools import (
     MCP_SERVERS,
     add_mcp_server,
     clear_mcp_cache,
+    deep_web_search,
     fetch_url,
     get_all_mcp_tools,
     get_deepwiki_tools,
@@ -34,9 +35,7 @@ class TestWebSearchTool:
     @patch("langgraph_up_devkits.tools.search._get_tavily_client")
     @patch("os.getenv")
     @pytest.mark.asyncio
-    async def test_web_search_execution_success(
-        self, mock_getenv, mock_get_tavily, mock_get_runtime
-    ):
+    async def test_web_search_execution_success(self, mock_getenv, mock_get_tavily, mock_get_runtime):
         """Test successful web search execution."""
         # Mock environment variable
         mock_getenv.return_value = "test_api_key"
@@ -52,9 +51,7 @@ class TestWebSearchTool:
         mock_tavily_class = Mock()
         mock_tavily_instance = Mock()
         mock_tavily_instance.search = Mock(
-            return_value={
-                "results": [{"title": "Test Result", "content": "Test content"}]
-            }
+            return_value={"results": [{"title": "Test Result", "content": "Test content"}]}
         )
         mock_tavily_class.return_value = mock_tavily_instance
         mock_get_tavily.return_value = mock_tavily_class
@@ -72,7 +69,6 @@ class TestWebSearchTool:
         mock_get_tavily.assert_called_once()
         mock_tavily_class.assert_called_once_with(api_key="test_api_key")
         mock_tavily_instance.search.assert_called_once_with(query="test query", max_results=10)
-
 
     @patch("langgraph_up_devkits.tools.search.get_runtime")
     @patch("langgraph_up_devkits.tools.search._get_tavily_client")
@@ -145,9 +141,7 @@ class TestTavilySearchHelper:
     @patch("importlib.import_module")
     def test_get_tavily_search_module_not_found(self, mock_import):
         """Test Tavily search with ModuleNotFoundError."""
-        mock_import.side_effect = ModuleNotFoundError(
-            "No module named 'tavily'"
-        )
+        mock_import.side_effect = ModuleNotFoundError("No module named 'tavily'")
 
         result = _get_tavily_client()
 
@@ -181,7 +175,6 @@ class TestMCPToolsIntegration:
         result = await get_mcp_client()
 
         assert result is mock_client
-
 
     @patch("langgraph_up_devkits.tools.mcp.MCP_AVAILABLE", True)
     @patch("langgraph_up_devkits.tools.mcp.MultiServerMCPClient")
@@ -307,7 +300,6 @@ class TestDeepwikiTools:
         assert isinstance(result, list)
 
 
-
 class TestMCPIntegration:
     """Test MCP tool integration."""
 
@@ -318,6 +310,7 @@ class TestMCPIntegration:
         """Test MCP tools when MCP is available."""
         # Clear any cached tools first
         from langgraph_up_devkits.tools.mcp import clear_mcp_cache, get_mcp_tools
+
         clear_mcp_cache()
 
         # Mock MCP client and tools
@@ -360,10 +353,7 @@ class TestMCPServerManagement:
         original_servers = MCP_SERVERS.copy()
 
         # Add new server
-        test_config = {
-            "url": "https://httpbin.org/mcp",
-            "transport": "http"
-        }
+        test_config = {"url": "https://httpbin.org/mcp", "transport": "http"}
         add_mcp_server("test_server", test_config)
 
         # Verify server was added
@@ -427,15 +417,17 @@ class TestMCPToolsMissingCoverage:
         # The import error coverage is already achieved through the actual import structure
         # Just verify the MCP_AVAILABLE flag exists and can be checked
         from langgraph_up_devkits.tools.mcp import MCP_AVAILABLE
+
         assert isinstance(MCP_AVAILABLE, bool)
 
         # Test the basic module imports work
         from langgraph_up_devkits.tools.mcp import get_context7_tools, get_deepwiki_tools, get_mcp_tools
+
         assert callable(get_mcp_tools)
         assert callable(get_deepwiki_tools)
         assert callable(get_context7_tools)
 
-    @patch('langgraph_up_devkits.tools.mcp.MultiServerMCPClient')
+    @patch("langgraph_up_devkits.tools.mcp.MultiServerMCPClient")
     @pytest.mark.asyncio
     async def test_get_mcp_client_server_config_exception(self, mock_client_class):
         """Test get_mcp_client exception with server configs."""
@@ -451,8 +443,8 @@ class TestMCPToolsMissingCoverage:
         assert result is None
         mock_client_class.assert_called_once()
 
-    @patch('langgraph_up_devkits.tools.mcp.MultiServerMCPClient')
-    @patch('langgraph_up_devkits.tools.mcp._mcp_client', None)
+    @patch("langgraph_up_devkits.tools.mcp.MultiServerMCPClient")
+    @patch("langgraph_up_devkits.tools.mcp._mcp_client", None)
     @pytest.mark.asyncio
     async def test_get_mcp_client_global_exception(self, mock_client_class):
         """Test get_mcp_client exception with global client."""
@@ -476,7 +468,7 @@ class TestMCPToolsMissingCoverage:
 
         assert result == []
 
-    @patch('langgraph_up_devkits.tools.mcp.get_mcp_client')
+    @patch("langgraph_up_devkits.tools.mcp.get_mcp_client")
     @pytest.mark.asyncio
     async def test_get_mcp_tools_exception_handling(self, mock_get_client):
         """Test get_mcp_tools exception handling."""
@@ -490,7 +482,7 @@ class TestMCPToolsMissingCoverage:
 
         assert result == []
 
-    @patch('langgraph_up_devkits.tools.mcp.get_mcp_tools')
+    @patch("langgraph_up_devkits.tools.mcp.get_mcp_tools")
     @pytest.mark.asyncio
     async def test_get_context7_tools_function(self, mock_get_mcp_tools):
         """Test get_context7_tools function."""
@@ -513,6 +505,7 @@ class TestMCPToolsAdvanced:
     @pytest.mark.asyncio
     async def test_get_all_mcp_tools_success(self, mock_get_mcp_tools):
         """Test getting all tools from all MCP servers."""
+
         # Mock different tools from different servers
         def mock_server_tools(server_name):
             if server_name == "deepwiki":
@@ -597,8 +590,10 @@ class TestFetchTool:
         mock_requests.get.return_value = mock_response
 
         # Mock aiohttp as unavailable, use requests fallback
-        with patch('langgraph_up_devkits.tools.fetch._get_aiohttp', return_value=None), \
-             patch('langgraph_up_devkits.tools.fetch._get_requests', return_value=mock_requests):
+        with (
+            patch("langgraph_up_devkits.tools.fetch._get_aiohttp", return_value=None),
+            patch("langgraph_up_devkits.tools.fetch._get_requests", return_value=mock_requests),
+        ):
             result = await fetch_url.ainvoke({"url": "https://httpbin.org/json"})
             assert result == "Test content without aiohttp"
 
@@ -611,8 +606,10 @@ class TestFetchTool:
         mock_response.raise_for_status.return_value = None
         mock_requests.get.return_value = mock_response
 
-        with patch('langgraph_up_devkits.tools.fetch._get_aiohttp', return_value=None), \
-             patch('langgraph_up_devkits.tools.fetch._get_requests', return_value=mock_requests):
+        with (
+            patch("langgraph_up_devkits.tools.fetch._get_aiohttp", return_value=None),
+            patch("langgraph_up_devkits.tools.fetch._get_requests", return_value=mock_requests),
+        ):
             result = await fetch_url.ainvoke({"url": "https://httpbin.org/json"})
             assert result == "Test content from requests"
 
@@ -627,8 +624,10 @@ class TestFetchTool:
         mock_response.raise_for_status.return_value = None
         mock_requests.get.return_value = mock_response
 
-        with patch('langgraph_up_devkits.tools.fetch._get_aiohttp', return_value=None), \
-             patch('langgraph_up_devkits.tools.fetch._get_requests', return_value=mock_requests):
+        with (
+            patch("langgraph_up_devkits.tools.fetch._get_aiohttp", return_value=None),
+            patch("langgraph_up_devkits.tools.fetch._get_requests", return_value=mock_requests),
+        ):
             result = await fetch_url.ainvoke({"url": "https://example.com"})
             assert result == "Test content from requests fallback"
 
@@ -639,15 +638,17 @@ class TestFetchTool:
         mock_aiohttp.ClientSession.side_effect = Exception("Connection failed")
         mock_aiohttp.ClientTimeout = Mock()
 
-        with patch('langgraph_up_devkits.tools.fetch._get_aiohttp', return_value=mock_aiohttp):
+        with patch("langgraph_up_devkits.tools.fetch._get_aiohttp", return_value=mock_aiohttp):
             with pytest.raises(Exception, match="Connection failed"):
                 await fetch_url.ainvoke({"url": "https://example.com"})
 
     @pytest.mark.asyncio
     async def test_fetch_url_no_libraries_available(self):
         """Test fetch_url when neither aiohttp nor requests are available."""
-        with patch('langgraph_up_devkits.tools.fetch._get_aiohttp', return_value=None), \
-             patch('langgraph_up_devkits.tools.fetch._get_requests', return_value=None):
+        with (
+            patch("langgraph_up_devkits.tools.fetch._get_aiohttp", return_value=None),
+            patch("langgraph_up_devkits.tools.fetch._get_requests", return_value=None),
+        ):
             with pytest.raises(ImportError, match="HTTP fetch requires"):
                 await fetch_url.ainvoke({"url": "https://example.com"})
 
@@ -657,8 +658,10 @@ class TestFetchTool:
         mock_requests = Mock()
         mock_requests.get.side_effect = Exception("Request failed")
 
-        with patch('langgraph_up_devkits.tools.fetch._get_aiohttp', return_value=None), \
-             patch('langgraph_up_devkits.tools.fetch._get_requests', return_value=mock_requests):
+        with (
+            patch("langgraph_up_devkits.tools.fetch._get_aiohttp", return_value=None),
+            patch("langgraph_up_devkits.tools.fetch._get_requests", return_value=mock_requests),
+        ):
             with pytest.raises(Exception, match="Request failed"):
                 await fetch_url.ainvoke({"url": "https://example.com"})
 
@@ -677,9 +680,8 @@ class TestFetchTool:
         aiohttp_result = _get_aiohttp()
 
         # Should return None or a module-like object
-        assert requests_result is None or hasattr(requests_result, 'get')
-        assert aiohttp_result is None or hasattr(aiohttp_result, 'ClientSession')
-
+        assert requests_result is None or hasattr(requests_result, "get")
+        assert aiohttp_result is None or hasattr(aiohttp_result, "ClientSession")
 
 
 class TestProviderRegistrationUnit:
@@ -719,7 +721,6 @@ class TestProviderRegistrationUnit:
         print("✅ Environment variable handling unit test passed")
 
 
-
 class TestThinkTool:
     """Test strategic reflection tool."""
 
@@ -734,3 +735,201 @@ class TestThinkTool:
         reflection = "Analyzed search results and identified knowledge gaps."
         result = think_tool.invoke({"reflection": reflection})
         assert result == f"Reflection recorded: {reflection}"
+
+
+class TestDeepWebSearchTool:
+    """Test deep web search tool functionality."""
+
+    def test_deep_web_search_tool_exists(self):
+        """Test deep web search tool can be imported."""
+        assert deep_web_search is not None
+        assert hasattr(deep_web_search, "name")
+        assert deep_web_search.name == "deep_web_search"
+        assert callable(deep_web_search)
+
+    def test_get_today_str(self):
+        """Test today string generation."""
+        from langgraph_up_devkits.tools.search import _get_today_str
+
+        result = _get_today_str()
+        assert isinstance(result, str)
+        assert len(result) > 0
+        # Should contain day, month and year
+        import datetime
+
+        today = datetime.datetime.now()
+        assert str(today.year) in result
+
+    @pytest.mark.asyncio
+    async def test_process_search_result_with_content(self):
+        """Test processing single search result with Tavily content."""
+        from langgraph_up_devkits.tools.search import _process_search_result
+
+        search_result = {
+            "url": "https://example.com",
+            "title": "Test Title",
+            "content": "Tavily AI-generated summary",
+            "raw_content": "# Full Markdown Content\n\nThis is the complete content...",
+        }
+
+        result = await _process_search_result(search_result, "test query")
+
+        assert result["url"] == "https://example.com"
+        assert result["title"] == "Test Title"
+        assert result["summary"] == "Tavily AI-generated summary"
+        assert result["filename"].startswith("Test_Title_")
+        assert result["filename"].endswith(".md")
+        assert result["raw_content"] == "# Full Markdown Content\n\nThis is the complete content..."
+        assert result["query"] == "test query"
+
+    @pytest.mark.asyncio
+    async def test_process_search_result_without_content(self):
+        """Test processing single search result without Tavily content."""
+        from langgraph_up_devkits.tools.search import _process_search_result
+
+        search_result = {
+            "url": "https://example.com",
+            "title": "Test Title",
+            "content": "",  # No Tavily content
+            "raw_content": "# Raw content for file storage",
+        }
+
+        result = await _process_search_result(search_result, "test query")
+
+        assert result["url"] == "https://example.com"
+        assert result["title"] == "Test Title"
+        assert result["summary"] == ""  # Empty since no Tavily content
+        assert result["filename"].startswith("Test_Title_")
+        assert result["filename"].endswith(".md")
+        assert result["raw_content"] == "# Raw content for file storage"
+        assert result["query"] == "test query"
+
+    def test_create_file_content(self):
+        """Test file content creation for VFS."""
+        from langgraph_up_devkits.tools.search import _create_file_content
+
+        processed_result = {
+            "title": "Test Title",
+            "url": "https://example.com",
+            "query": "test query",
+            "summary": "Tavily summary",
+            "raw_content": "# Full content",
+        }
+
+        result = _create_file_content(processed_result)
+
+        assert "# Test Title" in result
+        assert "**URL:** https://example.com" in result
+        assert "**Search Query:** test query" in result
+        assert "## Tavily Summary" in result
+        assert "Tavily summary" in result
+        assert "## Full Content" in result
+        assert "# Full content" in result
+
+    @patch("langgraph_up_devkits.tools.search._get_tavily_client")
+    @patch("os.getenv")
+    @pytest.mark.asyncio
+    async def test_run_tavily_search_success(self, mock_getenv, mock_get_tavily):
+        """Test successful Tavily search execution."""
+        from langgraph_up_devkits.tools.search import _run_tavily_search
+
+        # Mock environment and client
+        mock_getenv.return_value = "test_api_key"
+        mock_client = Mock()
+        mock_client.search.return_value = {"results": [{"title": "test"}]}
+        mock_tavily_class = Mock(return_value=mock_client)
+        mock_get_tavily.return_value = mock_tavily_class
+
+        result = await _run_tavily_search("test query", 2)
+
+        assert result == {"results": [{"title": "test"}]}
+        mock_tavily_class.assert_called_once_with(api_key="test_api_key")
+        # Check that search was called with the correct parameters including configurable include_raw_content
+        mock_client.search.assert_called_once()
+        call_args = mock_client.search.call_args
+        assert call_args.kwargs["query"] == "test query"
+        assert call_args.kwargs["max_results"] == 2
+        assert call_args.kwargs["search_depth"] == "advanced"
+        assert "include_raw_content" in call_args.kwargs  # Should be present with default "markdown"
+
+    @patch("langgraph_up_devkits.tools.search._get_tavily_client")
+    @pytest.mark.asyncio
+    async def test_run_tavily_search_no_client(self, mock_get_tavily):
+        """Test Tavily search when client not available."""
+        from langgraph_up_devkits.tools.search import _run_tavily_search
+
+        mock_get_tavily.return_value = None
+
+        with pytest.raises(ImportError, match="Tavily search requires"):
+            await _run_tavily_search("test query")
+
+    @patch("langgraph_up_devkits.tools.search._get_tavily_client")
+    @patch("os.getenv")
+    @pytest.mark.asyncio
+    async def test_run_tavily_search_no_api_key(self, mock_getenv, mock_get_tavily):
+        """Test Tavily search when API key not available."""
+        from langgraph_up_devkits.tools.search import _run_tavily_search
+
+        mock_getenv.return_value = None
+        mock_get_tavily.return_value = Mock()
+
+        with pytest.raises(ValueError, match="TAVILY_API_KEY environment variable is required"):
+            await _run_tavily_search("test query")
+
+    @patch("langgraph_up_devkits.tools.search.get_runtime")
+    @patch("langgraph_up_devkits.tools.search._get_tavily_client")
+    @patch("os.getenv")
+    @pytest.mark.asyncio
+    async def test_run_tavily_search_with_context_include_raw_content(
+        self, mock_getenv, mock_get_tavily, mock_get_runtime
+    ):
+        """Test Tavily search with context-configured include_raw_content."""
+        from langgraph_up_devkits.tools.search import _run_tavily_search
+
+        # Mock environment and client
+        mock_getenv.return_value = "test_api_key"
+        mock_client = Mock()
+        mock_client.search.return_value = {"results": [{"title": "test"}]}
+        mock_tavily_class = Mock(return_value=mock_client)
+        mock_get_tavily.return_value = mock_tavily_class
+
+        # Mock runtime with custom include_raw_content
+        mock_runtime = Mock()
+        mock_runtime.context.include_raw_content = "text"
+        mock_get_runtime.return_value = mock_runtime
+
+        result = await _run_tavily_search("test query", 1)
+
+        assert result == {"results": [{"title": "test"}]}
+        # Verify search was called with context value
+        call_args = mock_client.search.call_args
+        assert call_args.kwargs["include_raw_content"] == "text"
+
+    @patch("langgraph_up_devkits.tools.search.get_runtime")
+    @patch("langgraph_up_devkits.tools.search._get_tavily_client")
+    @patch("os.getenv")
+    @pytest.mark.asyncio
+    async def test_run_tavily_search_with_context_include_raw_content_none(
+        self, mock_getenv, mock_get_tavily, mock_get_runtime
+    ):
+        """Test Tavily search with include_raw_content set to 'none'."""
+        from langgraph_up_devkits.tools.search import _run_tavily_search
+
+        # Mock environment and client
+        mock_getenv.return_value = "test_api_key"
+        mock_client = Mock()
+        mock_client.search.return_value = {"results": [{"title": "test"}]}
+        mock_tavily_class = Mock(return_value=mock_client)
+        mock_get_tavily.return_value = mock_tavily_class
+
+        # Mock runtime with include_raw_content set to "none"
+        mock_runtime = Mock()
+        mock_runtime.context.include_raw_content = "none"
+        mock_get_runtime.return_value = mock_runtime
+
+        result = await _run_tavily_search("test query", 1)
+
+        assert result == {"results": [{"title": "test"}]}
+        # Verify search was called without include_raw_content parameter
+        call_args = mock_client.search.call_args
+        assert "include_raw_content" not in call_args.kwargs

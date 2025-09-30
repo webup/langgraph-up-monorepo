@@ -30,10 +30,6 @@ def create_context_aware_prompt(state: Any) -> list[AnyMessage]:
     if user_id:
         system_content += f"\n\nUser ID: {user_id}"
 
-    session_id = getattr(context, "session_id", None)
-    if session_id:
-        system_content += f"\nSession ID: {session_id}"
-
     # Add current time
     system_content += f"\n\nCurrent time: {datetime.now(UTC).isoformat()}"
 
