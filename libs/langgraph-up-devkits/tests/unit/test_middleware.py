@@ -119,17 +119,21 @@ class TestProviderRegistration:
         # Should register both ChatQwen and ChatQwQ
         assert mock_register.call_count >= 2
 
-    @patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True)
     @patch("importlib.import_module")
-    def test_register_qwen_provider_import_error(self, mock_import):
-        """Test Qwen provider registration with import error."""
+    @patch("langgraph_up_devkits.utils.providers.register_model_provider")
+    @patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True)
+    def test_register_qwen_provider_import_error(self, mock_register, mock_import):
+        """Test Qwen provider registration falls back to OpenAI with import error."""
         from langgraph_up_devkits.utils.providers import _register_qwen_provider
 
         # Make import fail
         mock_import.side_effect = ImportError("Module not found")
 
         result = _register_qwen_provider()
-        assert result is False
+        # Should return True with OpenAI fallback
+        assert result is True
+        # Verify OpenAI fallback was registered
+        assert mock_register.call_count >= 2
 
 
 class TestModelProviderMiddlewareEnhanced:

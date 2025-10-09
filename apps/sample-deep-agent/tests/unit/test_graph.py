@@ -1,6 +1,5 @@
 """Unit tests for sample deep agent graph components."""
 
-import pytest
 from unittest.mock import Mock, patch
 
 from sample_deep_agent.context import DeepAgentContext
@@ -225,9 +224,9 @@ class TestToolIntegration:
         assert deep_web_search is not None
         assert think_tool is not None
 
-        # Should have required methods
-        assert callable(deep_web_search)
-        assert callable(think_tool)
+        # Should have required methods (StructuredTool has invoke, not directly callable)
+        assert hasattr(deep_web_search, "invoke") or callable(deep_web_search)
+        assert hasattr(think_tool, "invoke") or callable(think_tool)
 
     @patch('sample_deep_agent.graph.async_create_deep_agent')
     def test_tools_passed_to_deep_agent(self, mock_create_deep_agent):

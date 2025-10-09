@@ -218,9 +218,10 @@ class TestProviderUtils:
             assert mock_register.call_count >= 2  # At least 2 calls for ChatQwen and ChatQwQ
 
     def test_qwen_provider_registration_import_error(self):
-        """Test Qwen provider registration with import error."""
+        """Test Qwen provider registration with import error falls back to OpenAI."""
         with (
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
+            patch("langgraph_up_devkits.utils.providers.register_model_provider") as mock_register,
             patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import _register_qwen_provider
@@ -229,7 +230,10 @@ class TestProviderUtils:
 
             result = _register_qwen_provider()
 
-            assert result is False
+            # Should return True with OpenAI fallback
+            assert result is True
+            # Verify OpenAI fallback was registered
+            assert mock_register.call_count >= 2  # qwen and qwq providers
 
     def test_qwen_provider_with_prc_region(self):
         """Test Qwen provider registration with PRC region."""
@@ -255,11 +259,11 @@ class TestProviderUtils:
             assert len(calls_with_base_url) > 0
 
     def test_siliconflow_provider_registration(self):
-        """Test SiliconFlow provider registration with SiliconFlowLLM."""
+        """Test SiliconFlow provider registration falls back to OpenAI when ChatSiliconFlow unavailable."""
         with (
             patch.dict("os.environ", {}, clear=True),  # Clear REGION env var
             patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True),
-            patch("langgraph_up_devkits.utils.providers.register_model_provider"),
+            patch("langgraph_up_devkits.utils.providers.register_model_provider") as mock_register,
             patch("importlib.import_module") as mock_import,
         ):
             from langgraph_up_devkits.utils.providers import (
@@ -274,8 +278,10 @@ class TestProviderUtils:
 
             result = _register_siliconflow_provider()
 
-            # With our enhanced approach, it should return False when ChatSiliconFlow is not available
-            assert result is False
+            # Should return True with OpenAI fallback
+            assert result is True
+            # Verify OpenAI fallback was registered
+            assert mock_register.call_count >= 1
             mock_import.assert_called_with("langchain_siliconflow")
 
     def test_siliconflow_provider_registration_with_chat_class(self):
@@ -457,10 +463,11 @@ class TestProviderUtils:
         result = normalize_region("unknown")
         assert result is None
 
-    @patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True)
     @patch("importlib.import_module")
-    def test_register_qwen_provider_missing_classes(self, mock_import):
-        """Test _register_qwen_provider when classes are missing."""
+    @patch("langgraph_up_devkits.utils.providers.register_model_provider")
+    @patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True)
+    def test_register_qwen_provider_missing_classes(self, mock_register, mock_import):
+        """Test _register_qwen_provider falls back to OpenAI when classes are missing."""
         from langgraph_up_devkits.utils.providers import _register_qwen_provider
 
         # Mock module with missing ChatQwen (line 52)
@@ -470,7 +477,10 @@ class TestProviderUtils:
         mock_import.return_value = mock_module
 
         result = _register_qwen_provider()
-        assert result is False
+        # Should return True with OpenAI fallback
+        assert result is True
+        # Verify OpenAI fallback was registered
+        assert mock_register.call_count >= 2
 
     def test_register_qwen_provider_international_region(self):
         """Test _register_qwen_provider with international region."""
@@ -496,14 +506,18 @@ class TestProviderUtils:
         # Should return True (success) or False (module not available)
         assert isinstance(result, bool)
 
-    @patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True)
     @patch("importlib.import_module")
-    def test_register_siliconflow_provider_import_error(self, mock_import):
-        """Test _register_siliconflow_provider with import error."""
+    @patch("langgraph_up_devkits.utils.providers.register_model_provider")
+    @patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", True)
+    def test_register_siliconflow_provider_import_error(self, mock_register, mock_import):
+        """Test _register_siliconflow_provider falls back to OpenAI with import error."""
         from langgraph_up_devkits.utils.providers import _register_siliconflow_provider
 
         # Make import fail (lines 110-111)
         mock_import.side_effect = ImportError("Module not found")
 
         result = _register_siliconflow_provider()
-        assert result is False
+        # Should return True with OpenAI fallback
+        assert result is True
+        # Verify OpenAI fallback was registered
+        assert mock_register.call_count >= 1

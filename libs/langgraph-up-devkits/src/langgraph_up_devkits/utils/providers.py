@@ -57,80 +57,78 @@ def normalize_region(region: str) -> str | None:
     return None
 
 
+def _get_qwen_base_url() -> str:
+    """Get Qwen base URL based on region."""
+    region = normalize_region(os.getenv("REGION", ""))
+    return (
+        "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+        if region == "international"
+        else "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    )
+
+
+def _get_siliconflow_base_url() -> str:
+    """Get SiliconFlow base URL based on region."""
+    region = normalize_region(os.getenv("REGION", ""))
+    return "https://api.siliconflow.com/v1" if region == "international" else "https://api.siliconflow.cn/v1"
+
+
 def _register_qwen_provider() -> bool:
-    """Register Qwen provider using langchain-dev-utils."""
+    """Register Qwen provider using langchain-dev-utils, fallback to OpenAI."""
     if not DEV_UTILS_AVAILABLE:
         return False
 
+    base_url = _get_qwen_base_url()
+
     try:
-        # Dynamic imports to avoid hard dependencies
+        # Try to use native langchain_qwq package
         import importlib
 
         qwq_module = importlib.import_module("langchain_qwq")
         ChatQwen = getattr(qwq_module, "ChatQwen", None)
         ChatQwQ = getattr(qwq_module, "ChatQwQ", None)
 
-        if not ChatQwen or not ChatQwQ:
-            return False
-
-        # Register both ChatQwen and ChatQwQ
-        register_model_provider("qwen", ChatQwen)  # For regular Qwen models
-        register_model_provider("qwq", ChatQwQ)  # For QwQ models
-
-        # Handle region-based URLs
-        region = normalize_region(os.getenv("REGION", ""))
-        if region == "prc":
-            base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        elif region == "international":
-            base_url = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
-        else:
-            base_url = None
-
-        # Register with base URL if needed
-        if base_url:
+        if ChatQwen and ChatQwQ:
             register_model_provider("qwen", ChatQwen, base_url=base_url)
             register_model_provider("qwq", ChatQwQ, base_url=base_url)
-
-        return True
+            return True
     except (ImportError, AttributeError, ModuleNotFoundError):
-        return False
+        pass
+
+    # Fallback to OpenAI client
+    register_model_provider("qwen", "openai", base_url=base_url)
+    register_model_provider("qwq", "openai", base_url=base_url)
+    return True
 
 
 def _register_siliconflow_provider() -> bool:
-    """Register SiliconFlow provider using langchain-dev-utils with proper base URL."""
+    """Register SiliconFlow provider using langchain-dev-utils, fallback to OpenAI."""
     if not DEV_UTILS_AVAILABLE:
         return False
 
+    base_url = _get_siliconflow_base_url()
+
     try:
-        # Dynamic import to avoid hard dependency
+        # Try to use native langchain_siliconflow package
         import importlib
 
         siliconflow_module = importlib.import_module("langchain_siliconflow")
         ChatSiliconFlow = getattr(siliconflow_module, "ChatSiliconFlow", None)
-        if not ChatSiliconFlow:
-            return False
 
-        # Handle region-based URLs during registration
-        region = normalize_region(os.getenv("REGION", ""))
-        if region == "prc":
-            base_url = "https://api.siliconflow.cn/v1"
-        elif region == "international":
-            base_url = "https://api.siliconflow.com/v1"
-        else:
-            base_url = "https://api.siliconflow.cn/v1"  # Default to PRC
+        if ChatSiliconFlow:
+            # Create factory to inject base_url
+            def siliconflow_factory(**kwargs: Any) -> Any:
+                kwargs["base_url"] = base_url
+                return ChatSiliconFlow(**kwargs)
 
-        # Create a factory function that returns ChatSiliconFlow with correct base URL
-        def siliconflow_factory(**kwargs: Any) -> Any:
-            # Always use our region-specific base URL
-            kwargs["base_url"] = base_url
-            return ChatSiliconFlow(**kwargs)
-
-        # Register the factory function instead of the raw class
-        register_model_provider("siliconflow", siliconflow_factory)
-
-        return True
+            register_model_provider("siliconflow", siliconflow_factory)
+            return True
     except (ImportError, AttributeError, ModuleNotFoundError):
-        return False
+        pass
+
+    # Fallback to OpenAI client
+    register_model_provider("siliconflow", "openai", base_url=base_url)
+    return True
 
 
 def _register_openrouter_provider() -> bool:

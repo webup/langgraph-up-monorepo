@@ -62,7 +62,7 @@ async def test_middleware_model_switching():
         agent = create_agent(
             model=fallback_model,  # Middleware will switch from this
             tools=[],
-            prompt=middleware_prompt_text,  # Must be string when using middleware
+            system_prompt=middleware_prompt_text,  # Must be string when using middleware
             context_schema=MiddlewareTestContext,
             middleware=[middleware],
         )
@@ -132,7 +132,7 @@ async def test_middleware_error_handling():
         agent = create_agent(
             model="fakeproviderthatdoesnotexist:some-model",  # This should fail in middleware
             tools=[],
-            prompt=error_prompt_text,  # Must be string when using middleware
+            system_prompt=error_prompt_text,  # Must be string when using middleware
             context_schema=NoModelContext,
             middleware=[middleware],
         )
@@ -207,7 +207,7 @@ async def test_filesystem_mask_middleware_with_agent():
     agent = create_agent(
         model=model,
         tools=[],
-        prompt="You are a helpful assistant. Answer questions briefly.",
+        system_prompt="You are a helpful assistant. Answer questions briefly.",
         middleware=[files_state_middleware, filesystem_mask_middleware],
     )
 
@@ -284,7 +284,7 @@ async def test_filesystem_mask_with_model_provider_middleware():
     agent = create_agent(
         model=model,  # Use already-loaded model
         tools=[],
-        prompt="You are a helpful assistant. Answer very briefly.",
+        system_prompt="You are a helpful assistant. Answer very briefly.",
         middleware=[files_state_middleware, filesystem_mask_middleware, model_provider_middleware],
     )
 

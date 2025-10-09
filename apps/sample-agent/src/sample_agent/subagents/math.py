@@ -34,10 +34,9 @@ def make_graph(config: RunnableConfig | None = None) -> CompiledStateGraph[Any, 
     model = load_chat_model(context.model_name)
 
     # Create and return the math agent directly
-    agent = create_agent(
+    return create_agent(
         model=model,
         tools=[add, multiply],
         name="math_expert",
-        prompt=MATH_EXPERT_PROMPT,
+        system_prompt=MATH_EXPERT_PROMPT,
     )
-    return agent.compile() if hasattr(agent, "compile") else agent

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import pytest
 from langchain.agents import create_agent
-from langchain_core.messages import AnyMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 
 from langgraph_up_devkits.context import SearchContext
 from langgraph_up_devkits.tools import (
@@ -86,25 +86,17 @@ async def test_create_agent_with_tools():
     # Use our load_chat_model which automatically registers providers
     model = load_chat_model(model="siliconflow:THUDM/GLM-Z1-9B-0414", temperature=0.3, max_tokens=200)
 
-    # Define custom prompt function
-    def agent_prompt(state) -> list[AnyMessage]:
-        from langgraph.runtime import get_runtime
-
-        runtime = get_runtime(AgentContext)
-        user_id = runtime.context.user_id
-
-        system_msg = HumanMessage(
-            content=(
-                f"You are a helpful assistant for user {user_id}. "
-                "Use tools when needed to fetch information. "
-                "Be concise in your responses."
-            )
-        )
-
-        return [system_msg] + state.get("messages", [])
+    # Define system prompt
+    agent_prompt = (
+        "You are a helpful assistant. "
+        "Use tools when needed to fetch information. "
+        "Be concise in your responses."
+    )
 
     # Create agent with tools and context schema
-    agent = create_agent(model=model, tools=[fetch_url, web_search], prompt=agent_prompt, context_schema=AgentContext)
+    agent = create_agent(
+        model=model, tools=[fetch_url, web_search], system_prompt=agent_prompt, context_schema=AgentContext
+    )
 
     # Test agent with a simple fetch task
     context = AgentContext(user_id="integration_test_user", max_search_results=1)
@@ -144,21 +136,9 @@ async def test_agent_with_search_tool():
     # Use our load_chat_model which automatically registers providers
     model = load_chat_model(model="siliconflow:THUDM/GLM-Z1-9B-0414", temperature=0.3, max_tokens=200)
 
-    def search_prompt(state) -> list[AnyMessage]:
-        from langgraph.runtime import get_runtime
+    search_prompt = "You are a research assistant. Be brief and factual."
 
-        runtime = get_runtime(SearchContext)
-        max_results = runtime.context.max_search_results
-
-        system_msg = HumanMessage(
-            content=(
-                f"You are a research assistant. You can search for up to {max_results} results. Be brief and factual."
-            )
-        )
-
-        return [system_msg] + state.get("messages", [])
-
-    agent = create_agent(model=model, tools=[web_search], prompt=search_prompt, context_schema=SearchContext)
+    agent = create_agent(model=model, tools=[web_search], system_prompt=search_prompt, context_schema=SearchContext)
 
     context = SearchContext(max_search_results=1, enable_deepwiki=False)
 
@@ -222,7 +202,7 @@ async def test_agent_with_deepwiki_tools():
     agent = create_agent(
         model=model,
         tools=deepwiki_tools,
-        prompt="""You are a helpful assistant. When asked about repositories,
+        system_prompt="""You are a helpful assistant. When asked about repositories,
         use your ask_question tool to get information.""",
         context_schema=SearchContext,
     )
@@ -298,7 +278,7 @@ async def test_agent_with_context7_tools():
     agent = create_agent(
         model=model,
         tools=context7_tools,
-        prompt="""You are a helpful assistant. When asked about libraries or documentation,
+        system_prompt="""You are a helpful assistant. When asked about libraries or documentation,
         use your resolve-library-id and get-library-docs tools to get information.""",
         context_schema=SearchContext,
     )
@@ -357,7 +337,7 @@ async def test_agent_with_think_tool_integration():
     agent = create_agent(
         model=model,
         tools=[think_tool, web_search],
-        prompt="""You are a helpful research assistant. When conducting research:
+        system_prompt="""You are a helpful research assistant. When conducting research:
         1. First search for information
         2. Use the think_tool to reflect on what you found and plan next steps
         3. Continue research if needed or provide final answer
@@ -453,7 +433,7 @@ async def test_agent_with_deep_web_search_tool():
     agent = create_agent(
         model=model,
         tools=[deep_web_search],
-        prompt=(
+        system_prompt=(
             "You are a research assistant. You MUST use the deep_web_search tool "
             "when asked to search or research any topic. Never answer from your own "
             "knowledge - always use the tool first."
@@ -554,7 +534,7 @@ async def test_agent_with_deep_web_search_state_persistence():
     agent = create_agent(
         model=model,
         tools=[deep_web_search],
-        prompt="You are a research assistant. Use deep_web_search when asked to research topics.",
+        system_prompt="You are a research assistant. Use deep_web_search when asked to research topics.",
         state_schema=DeepAgentState,
     )
 
@@ -605,7 +585,7 @@ async def test_agent_with_deep_web_search_with_context():
     agent = create_agent(
         model=model,
         tools=[deep_web_search],
-        prompt="""You are a research assistant with access to deep web search capabilities.
+        system_prompt="""You are a research assistant with access to deep web search capabilities.
         When asked to search for information, use the deep_web_search tool.
         Always use the tool when asked to research a topic.""",
         state_schema=DeepAgentState,

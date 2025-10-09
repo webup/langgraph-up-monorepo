@@ -89,9 +89,8 @@ class TestBasicWorkflow:
 
         mock_model = Mock()
         mock_load_model.return_value = mock_model
-        mock_agent = Mock()
-        mock_agent.compile.return_value = "compiled_agent"
-        mock_create_agent.return_value = mock_agent
+        mock_compiled_graph = Mock()
+        mock_create_agent.return_value = mock_compiled_graph
 
         config = {"configurable": {"model_name": "test_model"}}
         result = make_graph(config)
@@ -102,8 +101,8 @@ class TestBasicWorkflow:
         assert call_args[1]['model'] == mock_model
         assert call_args[1]['name'] == "math_expert"
         assert len(call_args[1]['tools']) == 2  # add and multiply
-        # Result should be compiled agent since agent has compile method
-        assert result == "compiled_agent"
+        # Result should be the compiled graph returned by create_agent
+        assert result == mock_compiled_graph
 
     @patch('sample_agent.subagents.research.create_agent')
     @patch('sample_agent.subagents.research.load_chat_model')
@@ -113,9 +112,8 @@ class TestBasicWorkflow:
 
         mock_model = Mock()
         mock_load_model.return_value = mock_model
-        mock_agent = Mock()
-        mock_agent.compile.return_value = "compiled_agent"
-        mock_create_agent.return_value = mock_agent
+        mock_compiled_graph = Mock()
+        mock_create_agent.return_value = mock_compiled_graph
 
         config = {"configurable": {"model_name": "test_model"}}
         result = make_graph(config)
@@ -126,8 +124,8 @@ class TestBasicWorkflow:
         assert call_args[1]['model'] == mock_model
         assert call_args[1]['name'] == "research_expert"
         assert len(call_args[1]['tools']) == 1  # web_search
-        # Result should be compiled agent since agent has compile method
-        assert result == "compiled_agent"
+        # Result should be the compiled graph returned by create_agent
+        assert result == mock_compiled_graph
 
     @patch('sample_agent.graph.load_chat_model')
     @patch('sample_agent.graph.make_math_graph')

@@ -41,5 +41,9 @@ jobs:
           ignore_words_file: .codespellignore
           path: "**/README.md"
       - name: Run tests with make
+        env:
+          SILICONFLOW_API_KEY: sk-test-fake-key-for-ci
+          OPENROUTER_API_KEY: sk-test-fake-key-for-ci
+          OPENAI_API_KEY: sk-test-fake-key-for-ci
         run: |
           make test

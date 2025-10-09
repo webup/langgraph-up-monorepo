@@ -29,7 +29,7 @@ class TestWebSearchTool:
         assert web_search is not None
         assert hasattr(web_search, "name")
         assert web_search.name == "web_search"
-        assert callable(web_search)
+        assert hasattr(web_search, "invoke") or callable(web_search)
 
     @patch("langgraph_up_devkits.tools.search.get_runtime")
     @patch("langgraph_up_devkits.tools.search._get_tavily_client")
@@ -578,7 +578,7 @@ class TestFetchTool:
         assert fetch_url is not None
         assert hasattr(fetch_url, "name")
         assert fetch_url.name == "fetch_url"
-        assert callable(fetch_url)
+        assert hasattr(fetch_url, "invoke") or callable(fetch_url)
 
     @pytest.mark.asyncio
     async def test_fetch_url_aiohttp_unavailable(self):
@@ -745,7 +745,7 @@ class TestDeepWebSearchTool:
         assert deep_web_search is not None
         assert hasattr(deep_web_search, "name")
         assert deep_web_search.name == "deep_web_search"
-        assert callable(deep_web_search)
+        assert hasattr(deep_web_search, "invoke") or callable(deep_web_search)
 
     def test_get_today_str(self):
         """Test today string generation."""

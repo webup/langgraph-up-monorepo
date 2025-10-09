@@ -7,30 +7,11 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Any, cast
 
+from langchain.tools.tool_node import InjectedState
 from langchain_core.messages import ToolMessage
-from langchain_core.tools import tool
+from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.runtime import get_runtime
 from langgraph.types import Command
-
-try:
-    # Try new location first (LangGraph 0.2+)
-    from langgraph.prebuilt.tool_node import InjectedState
-except ImportError:
-    try:
-        # Fallback to old location for compatibility
-        from langchain.agents.tool_node import InjectedState  # type: ignore[import-not-found,no-redef]
-    except ImportError as e:
-        raise ImportError(
-            "InjectedState is required for deep_web_search tool. "
-            "Please update LangChain and LangGraph to compatible versions."
-        ) from e
-
-try:
-    from langchain_core.tools import InjectedToolCallId
-except ImportError as e:
-    raise ImportError(
-        "InjectedToolCallId is required for deep_web_search tool. Please update LangChain to a compatible version."
-    ) from e
 
 
 def _get_tavily_client() -> Any:
