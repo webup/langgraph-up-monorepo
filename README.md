@@ -2,9 +2,9 @@
 
 **LangGraph-UP Monorepo** showcases how to build production-ready LangGraph agents using the latest **LangChain & LangGraph** V1 ecosystem, organized in a clean monorepo structure with shared libraries and multiple agent applications.
 
-[![Version](https://img.shields.io/badge/version-v0.2.0-blue.svg)](https://github.com/webup/langgraph-up-monorepo/releases/tag/v0.2.0)
-[![LangChain](https://img.shields.io/badge/LangChain-v1alpha-blue.svg)](https://github.com/langchain-ai/langchain)
-[![LangGraph](https://img.shields.io/badge/LangGraph-v1alpha-blue.svg)](https://github.com/langchain-ai/langgraph)
+[![Version](https://img.shields.io/badge/version-v0.3.0-blue.svg)](https://github.com/webup/langgraph-up-monorepo/releases/tag/v0.3.0)
+[![LangChain](https://img.shields.io/badge/LangChain-v1.0-blue.svg)](https://github.com/langchain-ai/langchain)
+[![LangGraph](https://img.shields.io/badge/LangGraph-v1.0-blue.svg)](https://github.com/langchain-ai/langgraph)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![PyPI](https://img.shields.io/badge/PyPI-langgraph--up--devkits-blue.svg)](https://test.pypi.org/project/langgraph-up-devkits/)
 [![Twitter](https://img.shields.io/twitter/follow/zhanghaili0610?style=social)](https://twitter.com/zhanghaili0610)
@@ -13,7 +13,8 @@
 
 - 🌐 **Universal Model Loading** - OpenRouter, Qwen, QwQ, SiliconFlow with automatic registration
 - 🤖 **Multi-Agent Orchestration** - Supervisor & deep research patterns with specialized sub-agents
-- 🛠 **Custom Middleware** - Model switching, file masking, summarization, and state management
+- 🛠 **LangChain v1.0 Middleware** - Model switching, file masking, summarization with v1.0 pattern
+- 🔬 **Deep Research Agent** - Advanced research workflow with deepagents integration
 - 🧪 **Developer Experience** - Hot reload, comprehensive testing, strict linting, PyPI publishing
 - 🚀 **Deployment Ready** - LangGraph Cloud configurations included
 - 🌍 **Global Ready** - Region-based provider configuration (PRC/International)
@@ -154,17 +155,17 @@ math_to_research = create_handoff_tool("research_expert")
 research_to_math = create_handoff_tool("math_expert")
 ```
 
-#### 🔧 Custom Middleware (LangChain v1)
+#### 🔧 Custom Middleware (LangChain v1.0)
 
-Built-in middleware for dynamic model switching, state management, and behavior modification:
+Built-in middleware for dynamic model switching, state management, and behavior modification using the **LangChain v1.0 middleware pattern**:
 
 ```python
 from langchain.agents import create_agent
-from langgraph_up_devkits import (
+from langgraph_up_devkits.middleware import (
     ModelProviderMiddleware,
     FileSystemMaskMiddleware,
-    load_chat_model
 )
+from langgraph_up_devkits import load_chat_model
 
 # Model provider middleware for automatic switching
 model_middleware = ModelProviderMiddleware()
@@ -183,10 +184,15 @@ context = {"model": "siliconflow:Qwen/Qwen3-8B"}
 result = await agent.ainvoke(messages, context=context)
 ```
 
-**Available Middleware:**
+**Available Middleware (v1.0 Compatible):**
 - `ModelProviderMiddleware` - Dynamic model switching based on context
 - `FileSystemMaskMiddleware` - Masks virtual file systems from LLM to save tokens
 - `SummarizationMiddleware` - Automatic message summarization for long conversations
+
+**Key Changes in v1.0:**
+- Migrated to LangChain v1.0 middleware pattern with `before_model()` and `after_model()` hooks
+- Compatible with `langchain.agents.create_agent` middleware system
+- Improved state management and model switching reliability
 
 For detailed documentation on additional features like middleware, tools, and utilities, see:
 
