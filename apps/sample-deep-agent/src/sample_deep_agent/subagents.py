@@ -17,7 +17,7 @@ research_sub_agent: SubAgent = {
         "into the necessary components, and then call multiple research agents in parallel, "
         "one for each sub question."
     ),
-    "prompt": SUB_RESEARCH_PROMPT,
+    "system_prompt": SUB_RESEARCH_PROMPT,
     "middleware": [filesystem_mask],
 }
 
@@ -27,7 +27,7 @@ critique_sub_agent: SubAgent = {
         "Used to critique the final report. Give this agent some information about "
         "how you want it to critique the report."
     ),
-    "prompt": SUB_CRITIQUE_PROMPT,
+    "system_prompt": SUB_CRITIQUE_PROMPT,
     "middleware": [filesystem_mask],
 }
 

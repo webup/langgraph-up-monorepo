@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import pytest
 from langchain.agents import create_agent
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain.messages import AIMessage, HumanMessage
 
 from langgraph_up_devkits.middleware import (
     FileSystemMaskMiddleware,
@@ -25,7 +25,7 @@ class MiddlewareTestContext:
     """Test context with model field for middleware testing."""
 
     user_id: str = "middleware_test"
-    model: str = "siliconflow:Qwen/Qwen3-8B"
+    model: str = "siliconflow:THUDM/glm-4-9b-chat"
 
 
 @pytest.mark.asyncio
@@ -33,7 +33,7 @@ async def test_middleware_model_switching():
     """Test middleware switches models based on context."""
     # Test if SiliconFlow provider can be loaded
     try:
-        load_chat_model("siliconflow:Qwen/Qwen3-8B")
+        load_chat_model("siliconflow:THUDM/glm-4-9b-chat")
         siliconflow_available = True
     except Exception:
         siliconflow_available = False
@@ -48,12 +48,16 @@ async def test_middleware_model_switching():
     middleware_prompt_text = (
         "You are a helpful assistant testing middleware functionality. "
         "Respond briefly to user requests. "
-        "If the middleware is working correctly, you should be using a SiliconFlow model."
+        "If the middleware is working correctly, you should be using a SiliconFlow GLM model."
     )
 
     try:
         # Create agent with a fallback model - middleware should switch to context model
         from langchain.chat_models import init_chat_model
+
+        # Set a mock OpenAI API key if not present (won't be used due to middleware switching)
+        if not os.getenv("OPENAI_API_KEY"):
+            os.environ["OPENAI_API_KEY"] = "sk-mock-key-for-testing-middleware-switching-only"
 
         fallback_model = init_chat_model("openai:gpt-3.5-turbo")
 
@@ -69,7 +73,7 @@ async def test_middleware_model_switching():
 
         context = MiddlewareTestContext(
             user_id="middleware_user",
-            model="siliconflow:Qwen/Qwen3-8B",  # Middleware should switch to this
+            model="siliconflow:THUDM/glm-4-9b-chat",  # Middleware should switch to this
         )
 
         print(f"Invoking agent with context model: {context.model}")
@@ -183,7 +187,7 @@ async def test_filesystem_mask_middleware_with_agent():
 
     try:
         # Load a simple model for testing
-        model = load_chat_model("siliconflow:Qwen/Qwen3-8B")
+        model = load_chat_model("siliconflow:THUDM/glm-4-9b-chat")
     except Exception:
         pytest.skip("SiliconFlow provider not available")
 
@@ -259,7 +263,7 @@ async def test_filesystem_mask_with_model_provider_middleware():
 
     try:
         # Load a model - this also tests provider availability
-        model = load_chat_model("siliconflow:Qwen/Qwen3-8B")
+        model = load_chat_model("siliconflow:THUDM/glm-4-9b-chat")
     except Exception:
         pytest.skip("SiliconFlow provider not available")
 

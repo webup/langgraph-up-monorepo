@@ -1,6 +1,6 @@
 """Strategic reflection tool for deliberate research pauses."""
 
-from langchain_core.tools import tool
+from langchain.tools import tool
 
 
 @tool(parse_docstring=True)

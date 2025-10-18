@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from langchain_core.messages import AnyMessage, SystemMessage
+from langchain.messages import AnyMessage, SystemMessage
 from langgraph.runtime import get_runtime
 
 

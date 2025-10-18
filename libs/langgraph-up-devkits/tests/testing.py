@@ -4,8 +4,9 @@ from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
-from langchain_core.tools import BaseTool
+from langchain.messages import AIMessage, HumanMessage
+from langchain.tools import BaseTool
+from langchain_core.messages import BaseMessage
 
 from langgraph_up_devkits.context.schemas import (
     BaseAgentContext,
@@ -102,7 +103,7 @@ class MockMiddleware:
         """
         self.name = name
         self.before_model_calls: list[Any] = []
-        self.modify_model_request_calls: list[tuple] = []
+        self.wrap_model_call_calls: list[tuple] = []
         self.after_model_calls: list[Any] = []
 
     def before_model(self, state):
@@ -110,10 +111,10 @@ class MockMiddleware:
         self.before_model_calls.append(state)
         return None
 
-    def modify_model_request(self, request, state):
-        """Mock modify_model_request hook."""
-        self.modify_model_request_calls.append((request, state))
-        return request
+    def wrap_model_call(self, request, handler):
+        """Mock wrap_model_call hook."""
+        self.wrap_model_call_calls.append((request, handler))
+        return handler(request)
 
     def after_model(self, state):
         """Mock after_model hook."""

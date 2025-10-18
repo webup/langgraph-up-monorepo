@@ -3,7 +3,7 @@
 from typing import Any
 
 from langchain.agents.middleware import SummarizationMiddleware as LCSummarizationMiddleware
-from langchain_core.language_models import BaseChatModel
+from langchain.chat_models import BaseChatModel
 
 from ..utils.providers import load_chat_model
 
