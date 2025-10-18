@@ -777,7 +777,8 @@ class TestDeepWebSearchTool:
         assert result["url"] == "https://example.com"
         assert result["title"] == "Test Title"
         assert result["summary"] == "Tavily AI-generated summary"
-        assert result["filename"].startswith("Test_Title_")
+        # Filename should be normalized canonical path starting with /
+        assert result["filename"].startswith("/Test_Title_")
         assert result["filename"].endswith(".md")
         assert result["raw_content"] == "# Full Markdown Content\n\nThis is the complete content..."
         assert result["query"] == "test query"
@@ -799,7 +800,8 @@ class TestDeepWebSearchTool:
         assert result["url"] == "https://example.com"
         assert result["title"] == "Test Title"
         assert result["summary"] == ""  # Empty since no Tavily content
-        assert result["filename"].startswith("Test_Title_")
+        # Filename should be normalized canonical path starting with /
+        assert result["filename"].startswith("/Test_Title_")
         assert result["filename"].endswith(".md")
         assert result["raw_content"] == "# Raw content for file storage"
         assert result["query"] == "test query"

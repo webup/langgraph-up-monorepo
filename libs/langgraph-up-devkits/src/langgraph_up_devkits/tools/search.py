@@ -4,14 +4,27 @@ import base64
 import os
 import re
 import uuid
-from datetime import datetime
-from typing import Annotated, Any, cast
+from datetime import UTC, datetime
+from typing import Annotated, Any, TypedDict, cast
 
+from langchain.messages import ToolMessage
+from langchain.tools import InjectedToolCallId, tool
 from langchain.tools.tool_node import InjectedState
-from langchain_core.messages import ToolMessage
-from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.runtime import get_runtime
 from langgraph.types import Command
+
+
+class FileData(TypedDict):
+    """Data structure for storing file contents with metadata."""
+
+    content: list[str]
+    """Lines of the file."""
+
+    created_at: str
+    """ISO 8601 timestamp of file creation."""
+
+    modified_at: str
+    """ISO 8601 timestamp of last modification."""
 
 
 def _get_tavily_client() -> Any:
@@ -76,6 +89,29 @@ def _get_today_str() -> str:
     return datetime.now().strftime("%a %b %-d, %Y")
 
 
+def _get_iso_timestamp() -> str:
+    """Get current timestamp in ISO 8601 format with UTC timezone."""
+    return datetime.now(UTC).isoformat()
+
+
+def _normalize_path(filename: str) -> str:
+    """Normalize path to canonical format starting with / and using forward slashes."""
+    # Remove any leading/trailing whitespace
+    filename = filename.strip()
+
+    # Ensure it starts with /
+    if not filename.startswith("/"):
+        filename = "/" + filename
+
+    # Replace backslashes with forward slashes
+    filename = filename.replace("\\", "/")
+
+    # Remove duplicate slashes
+    filename = re.sub(r"/+", "/", filename)
+
+    return filename
+
+
 async def _process_search_result(result: dict[str, Any], query: str) -> dict[str, Any]:
     """Process single search result using Tavily's content and raw_content."""
     url = result.get("url", "")
@@ -92,11 +128,14 @@ async def _process_search_result(result: dict[str, Any], query: str) -> dict[str
     name, ext = os.path.splitext(filename)
     unique_filename = f"{name}_{uid}{ext}"
 
+    # Normalize to canonical path format
+    canonical_path = _normalize_path(unique_filename)
+
     return {
         "url": url,
         "title": title,
         "summary": tavily_summary,  # Use Tavily's AI-generated summary
-        "filename": unique_filename,
+        "filename": canonical_path,  # Use normalized canonical path
         "raw_content": raw_content,  # Use raw_content as the full content
         "query": query,
     }
@@ -204,16 +243,27 @@ async def deep_web_search(
             # If runtime is not available, create empty state
             state = {}
 
-    # Update files in state
-    files = state.get("files", {})
+    # Update files in state using FileData structure
+    files: dict[str, FileData] = state.get("files", {})
     saved_files = []
     summaries = []
+    timestamp = _get_iso_timestamp()
 
     for processed in processed_results:
         filename = processed["filename"]
         file_content = _create_file_content(processed)
 
-        files[filename] = file_content
+        # Split content into lines for FileData structure
+        content_lines = file_content.splitlines()
+
+        # Create FileData with timestamps
+        file_data: FileData = {
+            "content": content_lines,
+            "created_at": timestamp,
+            "modified_at": timestamp,
+        }
+
+        files[filename] = file_data
         saved_files.append(filename)
         summaries.append(f"- {filename}: {processed['summary']}")
 

@@ -95,9 +95,9 @@ def _register_qwen_provider() -> bool:
     except (ImportError, AttributeError, ModuleNotFoundError):
         pass
 
-    # Fallback to OpenAI client
-    register_model_provider("qwen", "openai", base_url=base_url)
-    register_model_provider("qwq", "openai", base_url=base_url)
+    # Fallback to OpenAI-compatible client
+    register_model_provider("qwen", "openai-compatible", base_url=base_url)
+    register_model_provider("qwq", "openai-compatible", base_url=base_url)
     return True
 
 
@@ -126,8 +126,8 @@ def _register_siliconflow_provider() -> bool:
     except (ImportError, AttributeError, ModuleNotFoundError):
         pass
 
-    # Fallback to OpenAI client
-    register_model_provider("siliconflow", "openai", base_url=base_url)
+    # Fallback to OpenAI-compatible client
+    register_model_provider("siliconflow", "openai-compatible", base_url=base_url)
     return True
 
 
@@ -138,7 +138,7 @@ def _register_openrouter_provider() -> bool:
 
     register_model_provider(
         "openrouter",
-        "openai",  # Use OpenAI client
+        "openai-compatible",  # Use OpenAI-compatible client
         base_url="https://openrouter.ai/api/v1",
     )
     return True

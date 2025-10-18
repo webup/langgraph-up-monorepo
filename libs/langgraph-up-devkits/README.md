@@ -1,14 +1,21 @@
 # LangGraph-UP DevKits
 
-A comprehensive development toolkit for LangGraph agents providing reusable components, middleware, context schemas, and testing utilities.
+A comprehensive development toolkit for LangGraph agents (LangChain v1) providing reusable components, middleware, context schemas, and testing utilities.
 
 ## Features
 
 - 🎯 **Context Schemas**: Composable configuration schemas for different agent types
-- 🔧 **Middleware Components**: Model provider switching and behavior modification
+- 🔧 **Middleware Components**: Model provider switching with `wrap_model_call` pattern (LangChain v1)
 - 🛠️ **Reusable Tools**: Context-aware tools for web search and MCP integration
 - 🧪 **Testing Utilities**: Mock objects and helpers for agent testing
-- 📦 **Provider Integration**: Seamless model provider support via langchain-dev-utils
+- 📦 **Provider Integration**: Seamless model provider support with automatic registration
+- ⚡ **Async Support**: Full async/await support for all middleware and tools
+
+## Version
+
+**Current Version: 0.3.0** - LangChain v1 compatible
+
+This version uses the modern LangChain v1 API with `wrap_model_call` middleware pattern.
 
 ## Installation
 
@@ -29,6 +36,25 @@ uv add langgraph-up-devkits[all]
 uv add langgraph-up-devkits[dev]
 ```
 
+## LangChain v1 Migration
+
+This package is fully compatible with LangChain v1. Key changes from v0:
+
+- ✅ Uses `wrap_model_call` and `awrap_model_call` instead of `modify_model_request`
+- ✅ Imports from `langchain.agents` namespace (not `langchain_core.agents`)
+- ✅ Uses `system_prompt` parameter in `create_agent` (not `prompt` for middleware)
+- ✅ Provider registration uses `"openai-compatible"` for custom providers
+- ✅ Full async/await support throughout
+
+**Important Note on Provider Packages:**
+
+Since `langchain-qwq` and `langchain-siliconflow` have not yet been upgraded to LangChain v1, we use the OpenAI-compatible fallback for these providers. This means:
+
+- Qwen/QwQ models are accessed via OpenAI-compatible API with `DASHSCOPE_API_KEY`
+- SiliconFlow models are accessed via OpenAI-compatible API with `SILICONFLOW_API_KEY`
+- All functionality works seamlessly - the fallback is transparent to users
+- Once these packages are upgraded to v1, we can switch to native implementations
+
 ## Quick Start
 
 ```python
@@ -41,11 +67,11 @@ from langgraph_up_devkits import (
     create_context_aware_prompt
 )
 
-# Create agent using devkit components
+# Create agent using devkit components (LangChain v1)
 agent = create_agent(
-    model="openrouter:gpt-4o",  # Fallback model - middleware will switch
+    model="openai:gpt-4o-mini",  # Fallback model - middleware will switch
     tools=[web_search],
-    prompt=create_context_aware_prompt,
+    system_prompt=create_context_aware_prompt,  # v1: use system_prompt with middleware
     context_schema=DataAnalystContext,
     middleware=[ModelProviderMiddleware()]
 )
@@ -54,7 +80,7 @@ agent = create_agent(
 result = await agent.ainvoke(
     {"messages": [HumanMessage(content="Analyze current market trends")]},
     context=DataAnalystContext(
-        model="siliconflow:Qwen/Qwen3-8B",  # Middleware switches to this
+        model="siliconflow:THUDM/glm-4-9b-chat",  # Middleware switches to this
         max_search_results=10,
         max_data_rows=5000
     )
@@ -73,7 +99,7 @@ result = await agent.ainvoke(
 
 ### Middleware
 
-- `ModelProviderMiddleware` - Automatic model provider switching
+- `ModelProviderMiddleware` - Automatic model provider switching with `wrap_model_call` and `awrap_model_call` (LangChain v1)
 - `FileSystemMaskMiddleware` - Shadows virtual file system from model context
 
 ### Tools
@@ -108,40 +134,43 @@ basic_context = BaseAgentContext(
 
 # Search-enabled context
 search_context = SearchContext(
-    model="siliconflow:Qwen/Qwen3-8B",
+    model="siliconflow:THUDM/glm-4-9b-chat",
     max_search_results=8,
     enable_deepwiki=True,
     user_id="researcher_001"
 )
 ```
 
-### Middleware for Model Switching
+### Middleware for Model Switching (LangChain v1)
+
+The `ModelProviderMiddleware` uses the modern `wrap_model_call` pattern from LangChain v1, supporting both sync and async operations:
 
 ```python
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
 from langgraph_up_devkits.middleware import ModelProviderMiddleware
-# No imports needed - middleware handles providers automatically
+from dataclasses import dataclass
 
+@dataclass
 class ModelTestContext:
-    def __init__(self, model: str):
-        self.model = model
+    model: str
+    user_id: str = "test_user"
 
 # Example 1: Fallback model with middleware switching
 middleware = ModelProviderMiddleware()
-fallback_model = init_chat_model("openrouter:gpt-4o")
+fallback_model = init_chat_model("openai:gpt-4o-mini")
 
 agent = create_agent(
     model=fallback_model,  # Fallback model
     tools=[],
-    prompt="You are a helpful assistant.",
+    system_prompt="You are a helpful assistant.",
     context_schema=ModelTestContext,
     middleware=[middleware]
 )
 
-# Context specifies SiliconFlow model - middleware will switch automatically
-context = ModelTestContext(model="siliconflow:Qwen/Qwen3-8B")
+# Context specifies SiliconFlow GLM model - middleware will switch automatically
+context = ModelTestContext(model="siliconflow:THUDM/glm-4-9b-chat")
 result = await agent.ainvoke(
     {"messages": [HumanMessage(content="Hello")]},
     context=context
@@ -149,13 +178,19 @@ result = await agent.ainvoke(
 
 # Example 2: Direct SiliconFlow model in create_agent
 agent_direct = create_agent(
-    model="siliconflow:Qwen/Qwen3-8B",  # Direct model specification
+    model="siliconflow:THUDM/glm-4-9b-chat",  # Direct model specification
     tools=[],
-    prompt="You are a helpful assistant.",
+    system_prompt="You are a helpful assistant.",
     context_schema=ModelTestContext,
     middleware=[middleware]  # Still useful for context-based switching
 )
 ```
+
+**Key Features:**
+- ✅ Implements both `wrap_model_call` (sync) and `awrap_model_call` (async)
+- ✅ Automatic provider registration (OpenRouter, Qwen, SiliconFlow)
+- ✅ Context-based model switching at runtime
+- ✅ Graceful fallback on errors
 
 ### FileSystemMaskMiddleware for Virtual File Systems
 
@@ -185,9 +220,9 @@ filesystem_mask_middleware = FileSystemMaskMiddleware()
 
 # Create agent with both middlewares
 agent = create_agent(
-    model="openrouter:openai/gpt-4o",
+    model="siliconflow:THUDM/glm-4-9b-chat",
     tools=[],
-    prompt="You are a helpful assistant.",
+    system_prompt="You are a helpful assistant.",
     middleware=[files_state_middleware, filesystem_mask_middleware]
 )
 
@@ -233,9 +268,9 @@ context7_tools = await get_context7_tools()  # Library documentation
 
 # Create agent with context-aware tools
 agent = create_agent(
-    model="openrouter:gpt-4o",
+    model="openai:gpt-4o",
     tools=[web_search, fetch_url] + deepwiki_tools + context7_tools,
-    prompt="You are a research assistant with web search, GitHub documentation, and library documentation access.",
+    system_prompt="You are a research assistant with web search, GitHub documentation, and library documentation access.",
     context_schema=SearchContext
 )
 
@@ -266,16 +301,16 @@ os.environ["SILICONFLOW_API_KEY"] = "your_siliconflow_key"
 
 # Create research assistant
 research_agent = create_agent(
-    model="openrouter:openai/gpt-4o",  # Fallback model
+    model="openai:gpt-4o-mini",  # Fallback model
     tools=[web_search],
-    prompt=create_context_aware_prompt,  # Context-aware prompting
+    system_prompt=create_context_aware_prompt,  # Context-aware prompting
     context_schema=ResearchContext,
     middleware=[ModelProviderMiddleware()]  # Automatic model switching
 )
 
 # Configure research context
 research_context = ResearchContext(
-    model="siliconflow:Qwen/Qwen3-8B",  # Switch to SiliconFlow
+    model="siliconflow:THUDM/glm-4-9b-chat",  # Switch to SiliconFlow GLM
     max_search_results=10,
     enable_deepwiki=True,
     user_id="researcher_001",
@@ -314,9 +349,9 @@ from langgraph_up_devkits.tools import get_deepwiki_tools
 deepwiki_tools = await get_deepwiki_tools()
 
 agent = create_agent(
-    model="openrouter:openai/gpt-4o",
+    model="openai:gpt-4o",
     tools=deepwiki_tools,
-    prompt="You are a helpful assistant with access to GitHub repository documentation."
+    system_prompt="You are a helpful assistant with access to GitHub repository documentation."
 )
 
 # Query GitHub repository information
@@ -338,9 +373,9 @@ from langgraph_up_devkits.tools import get_context7_tools
 context7_tools = await get_context7_tools()
 
 agent = create_agent(
-    model="openrouter:openai/gpt-4o",
+    model="openai:gpt-4o",
     tools=context7_tools,
-    prompt="You are a helpful assistant with access to library documentation."
+    system_prompt="You are a helpful assistant with access to library documentation."
 )
 
 # Query library documentation
@@ -384,9 +419,9 @@ custom_tools = await get_mcp_tools("my_custom_server")  # Custom server
 all_tools = deepwiki_tools + context7_tools + custom_tools
 
 comprehensive_agent = create_agent(
-    model="openrouter:openai/gpt-4o",
+    model="openai:gpt-4o",
     tools=all_tools,
-    prompt="""You are a comprehensive research assistant with access to:
+    system_prompt="""You are a comprehensive research assistant with access to:
     - GitHub repository documentation (via ask_question for repos)
     - Library documentation (via resolve-library-id and get-library-docs)
     - Custom MCP server tools
@@ -416,7 +451,7 @@ Automatic provider registration (no manual setup required):
   - Requires: `OPENROUTER_API_KEY` in environment or `.env` file
 - **Qwen**: `qwen:qwen-flash`, `qwq:qwq-32b-preview`
   - Requires: `DASHSCOPE_API_KEY` in environment or `.env` file
-- **SiliconFlow**: `siliconflow:Qwen/Qwen3-8B`, `siliconflow:THUDM/GLM-Z1-9B-0414`
+- **SiliconFlow**: `siliconflow:THUDM/glm-4-9b-chat`, `siliconflow:Qwen/Qwen3-8B`
   - Requires: `SILICONFLOW_API_KEY` in environment or `.env` file
 - Any provider supported by `init_chat_model`
 
@@ -428,7 +463,7 @@ You can also use our `load_chat_model` utility directly for standalone model loa
 from langgraph_up_devkits import load_chat_model
 
 # Automatic provider registration and model loading
-model = load_chat_model("siliconflow:Qwen/Qwen3-8B")
+model = load_chat_model("siliconflow:THUDM/glm-4-9b-chat")
 
 # Use the model directly
 response = await model.ainvoke("Hello, how are you?")
@@ -436,14 +471,14 @@ print(response.content)
 
 # Load with configuration parameters
 configured_model = load_chat_model(
-    model="openrouter:moonshotai/kimi-k2-0905",
+    model="openrouter:anthropic/claude-sonnet-4",
     temperature=0.7,
     max_tokens=1000
 )
 
 # Load different providers seamlessly
 qwen_model = load_chat_model("qwen:qwen-flash")
-siliconflow_model = load_chat_model("siliconflow:Qwen/Qwen3-8B")
+glm_model = load_chat_model("siliconflow:THUDM/glm-4-9b-chat")
 openrouter_model = load_chat_model("openrouter:openai/gpt-4o")
 ```
 
