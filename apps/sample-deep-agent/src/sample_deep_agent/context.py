@@ -10,7 +10,7 @@ class DeepAgentContext(BaseModel):
     """Context configuration for deep agent runtime settings."""
 
     # Model configuration
-    model_name: str = Field(default="siliconflow:zai-org/GLM-4.5", description="Default model name")
+    model_name: str = Field(default="siliconflow:deepseek-ai/DeepSeek-V3.2-Exp", description="Default model name")
 
     # Graph configuration
     recursion_limit: int = Field(default=1000, description="Recursion limit for agent execution")

@@ -5,9 +5,13 @@ from unittest.mock import Mock, patch
 import pytest
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def mock_openai_key(monkeypatch):
-    """Mock API keys to prevent API key errors in unit tests."""
+    """Mock API keys to prevent API key errors in unit tests.
+
+    Note: This fixture is NOT autouse - it must be explicitly requested by unit tests.
+    Integration tests need real API keys from the environment.
+    """
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-fake-key-for-unit-tests")
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test-fake-key-for-unit-tests")
     monkeypatch.setenv("SILICONFLOW_API_KEY", "sk-test-fake-key-for-unit-tests")
