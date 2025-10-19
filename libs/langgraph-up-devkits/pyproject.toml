@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "langchain>=1.0.0",
-    "langchain-dev-utils>=0.1.24",
+    "langchain-dev-utils>=1.0.0",
     "tavily-python>=0.7.12",
     "langchain-mcp-adapters>=0.1.11",
     "langchain-openai>=1.0.0",

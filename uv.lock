@@ -451,16 +451,16 @@ wheels = [
 
 [[package]]
 name = "deepagents"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain" },
     { name = "langchain-anthropic" },
     { name = "langchain-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/bb/ef7dc91b7b8b08e030c3340d871abd72a601b3a4a134c77b4db2425c24bc/deepagents-0.1.0.tar.gz", hash = "sha256:56e1f3db57f67d8f666d1c20e1de8050d169240d204a28e5a75c998696ec57ab", size = 32364, upload-time = "2025-10-17T21:19:33.525Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a7/73/25dc8666a0724babb9b86fd129ab8346d402e197aabe7ba01f2100c75101/deepagents-0.1.1.tar.gz", hash = "sha256:607094d2508743be8bde7ec9f977b151a577c1261c24d23723ec99df64f369ff", size = 33818, upload-time = "2025-10-18T15:44:50.569Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/03/0aa9d748d04484701ff5dd7a695a4cd534e0194ff1aebf1fce00a03b831e/deepagents-0.1.0-py3-none-any.whl", hash = "sha256:6f6dd1e32629dd60790d6e96155801e88cb0d5afcff3d0363d79fdf92edfcaa5", size = 26960, upload-time = "2025-10-17T21:19:32.421Z" },
+    { url = "https://files.pythonhosted.org/packages/90/e2/e450feb3ea5729352dcf725dcf3ada1f33f26d37dc6af4e61d6d9b9a2d45/deepagents-0.1.1-py3-none-any.whl", hash = "sha256:a20e53291e91484570a93bf8a98e5979cc7644c73ce37481a845365cc2d32084", size = 27956, upload-time = "2025-10-18T15:44:49.361Z" },
 ]
 
 [[package]]
@@ -729,11 +729,11 @@ wheels = [
 
 [[package]]
 name = "iniconfig"
-version = "2.1.0"
+version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f2/97/ebf4da567aa6827c909642694d71c9fcf53e5b504f2d96afea02718862f3/iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7", size = 4793, upload-time = "2025-03-19T20:09:59.721Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730", size = 20503, upload-time = "2025-10-18T21:55:43.219Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760", size = 6050, upload-time = "2025-03-19T20:10:01.071Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484, upload-time = "2025-10-18T21:55:41.639Z" },
 ]
 
 [[package]]
@@ -1009,15 +1009,15 @@ wheels = [
 
 [[package]]
 name = "langchain-dev-utils"
-version = "0.1.24"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain" },
     { name = "langgraph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3e/49/531a98d88637d484b2703617712156f46a5da4ef51d74795b529fa6b3d25/langchain_dev_utils-0.1.24.tar.gz", hash = "sha256:e974a4a76205076d107fdb4d4f5371ba265edfbd58757ecd695326b4a8bdda3b", size = 77453, upload-time = "2025-10-14T12:07:28.312Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/90/5c1fcbf20054bf171800fd5858846c5b1317920f5c4b0c3bc42a4ea0e060/langchain_dev_utils-1.0.0.tar.gz", hash = "sha256:9c6d7dcc479b393734d2b69aca26af19956e0355d5eed3c535d7989ff9803069", size = 160913, upload-time = "2025-10-19T09:36:06.473Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/5f/79904900e9c31320c1575767812f02beb6edb1704d0a7d2649fab0390640/langchain_dev_utils-0.1.24-py3-none-any.whl", hash = "sha256:4dc249b2fe04868fc032614075585c857bb651800c285e3c48bf69e6404e54c0", size = 27531, upload-time = "2025-10-14T12:07:27.162Z" },
+    { url = "https://files.pythonhosted.org/packages/11/cb/79c0698011981b8e2065d40ffb3e02ba0f0d88b57b3e523a4903b38b7eeb/langchain_dev_utils-1.0.0-py3-none-any.whl", hash = "sha256:3c690da88a5c6578eb17ca14a397cd7fb65c887fdba93127a531150061dea9dd", size = 31113, upload-time = "2025-10-19T09:35:51.899Z" },
 ]
 
 [[package]]
@@ -1232,7 +1232,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
     { name = "langchain", specifier = ">=1.0.0" },
     { name = "langchain-anthropic", specifier = ">=1.0.0" },
-    { name = "langchain-dev-utils", specifier = ">=0.1.24" },
+    { name = "langchain-dev-utils", specifier = ">=1.0.0" },
     { name = "langchain-mcp-adapters", specifier = ">=0.1.11" },
     { name = "langchain-openai", specifier = ">=1.0.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11.1" },
@@ -2464,7 +2464,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "deepagents", specifier = ">=0.1.0" },
+    { name = "deepagents", specifier = ">=0.1.1" },
     { name = "langgraph-up-devkits", editable = "libs/langgraph-up-devkits" },
 ]
 

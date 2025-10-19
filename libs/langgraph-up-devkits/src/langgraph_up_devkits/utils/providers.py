@@ -7,8 +7,12 @@ from typing import Any
 ChatModel = Any
 
 try:
-    from langchain_dev_utils import load_chat_model as _load_chat_model_original
-    from langchain_dev_utils import register_model_provider as _register_model_provider
+    from langchain_dev_utils.chat_models import (
+        load_chat_model as _load_chat_model_original,
+    )
+    from langchain_dev_utils.chat_models import (
+        register_model_provider as _register_model_provider,
+    )
 
     DEV_UTILS_AVAILABLE = True
 
