@@ -23,10 +23,10 @@ class TestModelProviderMiddleware:
         """Test middleware can be initialized."""
         middleware = ModelProviderMiddleware()
         assert middleware is not None
-        assert hasattr(middleware, "modify_model_request")
+        assert hasattr(middleware, "wrap_model_call")
 
     @patch("langgraph_up_devkits.middleware.model_provider.load_chat_model")
-    def test_modify_model_request_with_dev_utils(self, mock_load_chat_model):
+    def test_wrap_model_call_with_dev_utils(self, mock_load_chat_model):
         """Test model request modification when dev utils are available."""
         # Mock the runtime and context
         mock_runtime = Mock()
@@ -38,20 +38,27 @@ class TestModelProviderMiddleware:
         mock_model = Mock()
         mock_load_chat_model.return_value = mock_model
 
-        # Mock the request and state
+        # Mock the request
         mock_request = Mock()
-        mock_state = Mock()
+        mock_request.runtime = mock_runtime
+
+        # Mock the handler
+        mock_response = Mock()
+        mock_handler = Mock(return_value=mock_response)
 
         # Test the middleware
         middleware = ModelProviderMiddleware()
-        result = middleware.modify_model_request(mock_request, mock_state, mock_runtime)
+        result = middleware.wrap_model_call(mock_request, mock_handler)
 
         # Verify the model was loaded and set
         mock_load_chat_model.assert_called_once_with("qwen:qwen-flash")
-        assert result.model == mock_model
+        assert mock_request.model == mock_model
+        # Verify handler was called with modified request
+        mock_handler.assert_called_once_with(mock_request)
+        assert result == mock_response
 
     @patch("langgraph_up_devkits.middleware.model_provider.load_chat_model")
-    def test_modify_model_request_fallback(self, mock_load_chat_model):
+    def test_wrap_model_call_fallback(self, mock_load_chat_model):
         """Test model request modification fallback when dev utils not available."""
         # Mock the runtime and context
         mock_runtime = Mock()
@@ -63,17 +70,24 @@ class TestModelProviderMiddleware:
         mock_model = Mock()
         mock_load_chat_model.return_value = mock_model
 
-        # Mock the request and state
+        # Mock the request
         mock_request = Mock()
-        mock_state = Mock()
+        mock_request.runtime = mock_runtime
+
+        # Mock the handler
+        mock_response = Mock()
+        mock_handler = Mock(return_value=mock_response)
 
         # Test the middleware
         middleware = ModelProviderMiddleware()
-        result = middleware.modify_model_request(mock_request, mock_state, mock_runtime)
+        result = middleware.wrap_model_call(mock_request, mock_handler)
 
         # Verify the model was loaded
         mock_load_chat_model.assert_called_once_with("openai:openai/gpt-4o")
-        assert result.model == mock_model
+        assert mock_request.model == mock_model
+        # Verify handler was called
+        mock_handler.assert_called_once_with(mock_request)
+        assert result == mock_response
 
 
 class TestProviderRegistration:
@@ -88,7 +102,7 @@ class TestProviderRegistration:
         result = _register_openrouter_provider()
 
         assert result is True
-        mock_register.assert_called_once_with("openrouter", "openai", base_url="https://openrouter.ai/api/v1")
+        mock_register.assert_called_once_with("openrouter", "openai-compatible", base_url="https://openrouter.ai/api/v1")
 
     @patch("langgraph_up_devkits.utils.providers.DEV_UTILS_AVAILABLE", False)
     def test_register_provider_when_unavailable(self):
@@ -140,7 +154,7 @@ class TestModelProviderMiddlewareEnhanced:
     """Enhanced tests for ModelProviderMiddleware."""
 
     @patch("langgraph_up_devkits.middleware.model_provider.load_chat_model")
-    def test_modify_model_request_different_model_specs(self, mock_load_model):
+    def test_wrap_model_call_different_model_specs(self, mock_load_model):
         """Test middleware with different model specifications."""
         mock_model = Mock()
         mock_load_model.return_value = mock_model
@@ -165,21 +179,26 @@ class TestModelProviderMiddlewareEnhanced:
             middleware = ModelProviderMiddleware()
             request = Mock()
             request.model = None
-            state = Mock()
+            request.runtime = mock_runtime
+
+            # Mock handler
+            mock_response = Mock()
+            mock_handler = Mock(return_value=mock_response)
 
             # Execute
-            result = middleware.modify_model_request(request, state, mock_runtime)
+            result = middleware.wrap_model_call(request, mock_handler)
 
             # Verify
-            assert result is request
-            assert result.model is mock_model
+            assert request.model is mock_model
             mock_load_model.assert_called_with(model_spec)
+            mock_handler.assert_called_once_with(request)
+            assert result == mock_response
 
             # Reset mock for next iteration
             mock_load_model.reset_mock()
 
     @patch("langgraph_up_devkits.middleware.model_provider.load_chat_model")
-    def test_modify_model_request_preserves_other_attributes(self, mock_load_model):
+    def test_wrap_model_call_preserves_other_attributes(self, mock_load_model):
         """Test that middleware preserves other request attributes."""
         # Setup mocks
         mock_runtime = Mock()
@@ -194,23 +213,28 @@ class TestModelProviderMiddlewareEnhanced:
         middleware = ModelProviderMiddleware()
         request = Mock()
         request.model = None
+        request.runtime = mock_runtime
         request.temperature = 0.7
         request.max_tokens = 1000
         request.custom_attribute = "test_value"
-        state = Mock()
+
+        # Mock handler
+        mock_response = Mock()
+        mock_handler = Mock(return_value=mock_response)
 
         # Execute
-        result = middleware.modify_model_request(request, state, mock_runtime)
+        result = middleware.wrap_model_call(request, mock_handler)
 
         # Verify model was updated but other attributes preserved
-        assert result is request
-        assert result.model is mock_model
-        assert result.temperature == 0.7
-        assert result.max_tokens == 1000
-        assert result.custom_attribute == "test_value"
+        assert request.model is mock_model
+        assert request.temperature == 0.7
+        assert request.max_tokens == 1000
+        assert request.custom_attribute == "test_value"
+        mock_handler.assert_called_once_with(request)
+        assert result == mock_response
 
     @patch("langgraph_up_devkits.middleware.model_provider.load_chat_model")
-    def test_modify_model_request_model_loading_error(self, mock_load_model):
+    def test_wrap_model_call_model_loading_error(self, mock_load_model):
         """Test middleware behavior when model loading fails."""
         # Setup mocks
         mock_runtime = Mock()
@@ -225,32 +249,42 @@ class TestModelProviderMiddlewareEnhanced:
         middleware = ModelProviderMiddleware()
         request = Mock()
         request.model = None
-        state = Mock()
+        request.runtime = mock_runtime
+
+        # Mock handler
+        mock_response = Mock()
+        mock_handler = Mock(return_value=mock_response)
 
         # Middleware should handle the error gracefully and keep original model
-        result = middleware.modify_model_request(request, state, mock_runtime)
+        result = middleware.wrap_model_call(request, mock_handler)
 
-        # Should return the request unchanged when model loading fails
-        assert result is request
+        # Should call handler with original model when loading fails
         assert request.model is None  # Original model should be unchanged
+        mock_handler.assert_called_once_with(request)
+        assert result == mock_response
 
-    def test_modify_model_request_runtime_error(self):
+    def test_wrap_model_call_runtime_error(self):
         """Test middleware behavior when runtime access fails."""
         # Create middleware and request
         middleware = ModelProviderMiddleware()
         request = Mock()
-        state = Mock()
 
         # Create a runtime that will cause an error when accessing context
         mock_runtime = Mock()
         mock_runtime.context = Mock()
         mock_runtime.context.model = Mock(side_effect=RuntimeError("Runtime not available"))
+        request.runtime = mock_runtime
+
+        # Mock handler
+        mock_response = Mock()
+        mock_handler = Mock(return_value=mock_response)
 
         # Middleware should handle the runtime error gracefully
-        result = middleware.modify_model_request(request, state, mock_runtime)
+        result = middleware.wrap_model_call(request, mock_handler)
 
-        # Should return the request unchanged when runtime access fails
-        assert result is request
+        # Should call handler with original request when runtime access fails
+        mock_handler.assert_called_once_with(request)
+        assert result == mock_response
 
 
 class TestMiddlewareStructure:
@@ -261,16 +295,16 @@ class TestMiddlewareStructure:
         middleware = ModelProviderMiddleware()
 
         # Test basic attributes
-        assert hasattr(middleware, "modify_model_request")
+        assert hasattr(middleware, "wrap_model_call")
 
         # Test method signature
         import inspect
 
-        sig = inspect.signature(middleware.modify_model_request)
+        sig = inspect.signature(middleware.wrap_model_call)
         params = list(sig.parameters.keys())
 
         assert "request" in params
-        assert "state" in params
+        assert "handler" in params
 
         print("✅ Middleware structure is correct")
 
@@ -299,7 +333,7 @@ class TestMiddlewareStructure:
         print("✅ Enhanced SiliconFlow provider registration unit test passed")
 
     @patch("langgraph_up_devkits.middleware.model_provider.load_chat_model")
-    def test_modify_model_request_no_context_model_with_provider_format(self, mock_load_model):
+    def test_wrap_model_call_no_context_model_with_provider_format(self, mock_load_model):
         """Test middleware when no context model but original has provider format."""
         # Setup runtime without model context
         mock_runtime = Mock()
@@ -314,23 +348,28 @@ class TestMiddlewareStructure:
         # Create middleware and request with provider format
         middleware = ModelProviderMiddleware()
         request = Mock()
-        request.model = "openai:gpt-4"  # String with provider format
+        request.runtime = mock_runtime
         # Create a mock that doesn't have invoke attribute
         mock_model_obj = Mock()
         del mock_model_obj.invoke  # Remove invoke attribute
         request.model = mock_model_obj
         request.model.__str__ = Mock(return_value="openai:gpt-4")  # Make str() work
-        state = Mock()
+
+        # Mock handler
+        mock_response = Mock()
+        mock_handler = Mock(return_value=mock_response)
 
         # Execute
-        result = middleware.modify_model_request(request, state, mock_runtime)
+        result = middleware.wrap_model_call(request, mock_handler)
 
         # Should resolve the provider model format
         mock_load_model.assert_called_with("openai:gpt-4")
-        assert result.model is mock_model
+        assert request.model is mock_model
+        mock_handler.assert_called_once_with(request)
+        assert result == mock_response
 
     @patch("langgraph_up_devkits.middleware.model_provider.load_chat_model")
-    def test_modify_model_request_provider_resolution_failure(self, mock_load_model):
+    def test_wrap_model_call_provider_resolution_failure(self, mock_load_model):
         """Test middleware when provider resolution fails."""
         # Setup runtime without model context
         mock_runtime = Mock()
@@ -344,36 +383,44 @@ class TestMiddlewareStructure:
         # Create middleware and request with provider format
         middleware = ModelProviderMiddleware()
         request = Mock()
+        request.runtime = mock_runtime
         # Create a mock that doesn't have invoke attribute
         mock_model_obj = Mock()
         del mock_model_obj.invoke  # Remove invoke attribute
         request.model = mock_model_obj
         request.model.__str__ = Mock(return_value="unknown:unknown-model")  # Make str() work
-        state = Mock()
+
+        # Mock handler
+        mock_handler = Mock()
 
         # Should raise ValueError when provider resolution fails
         with pytest.raises(ValueError, match="Cannot resolve model provider"):
-            middleware.modify_model_request(request, state, mock_runtime)
+            middleware.wrap_model_call(request, mock_handler)
 
-    def test_modify_model_request_unexpected_exception(self):
+    def test_wrap_model_call_unexpected_exception(self):
         """Test middleware behavior with unexpected exceptions."""
         # Create middleware and request
         middleware = ModelProviderMiddleware()
         request = Mock()
         request.model = "test-model"
-        state = Mock()
 
         # Create a runtime that will cause an unexpected exception
         mock_runtime = Mock()
         mock_runtime.context = Mock()
         mock_runtime.context.model = None  # No model in context
+        request.runtime = mock_runtime
+
+        # Mock handler
+        mock_response = Mock()
+        mock_handler = Mock(return_value=mock_response)
 
         # Test that middleware handles the case gracefully (no exception should be raised)
-        result = middleware.modify_model_request(request, state, mock_runtime)
+        result = middleware.wrap_model_call(request, mock_handler)
 
-        # Should return the request unchanged when no context model
-        assert result is request
-        assert result.model == "test-model"
+        # Should call handler with original request when no context model
+        mock_handler.assert_called_once_with(request)
+        assert result == mock_response
+        assert request.model == "test-model"
 
     def test_dev_utils_import_fallback(self):
         """Test fallback behavior when langchain-dev-utils is not available."""

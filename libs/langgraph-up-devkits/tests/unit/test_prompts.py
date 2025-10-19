@@ -3,7 +3,7 @@
 from datetime import UTC
 from unittest.mock import Mock, patch
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain.messages import HumanMessage, SystemMessage
 
 from langgraph_up_devkits.prompts import (
     DATA_ANALYST_PROMPT,

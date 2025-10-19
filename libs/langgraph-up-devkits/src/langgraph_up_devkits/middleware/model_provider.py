@@ -1,9 +1,9 @@
 """Model provider middleware using our load_chat_model utility."""
 
+from collections.abc import Awaitable, Callable
 from typing import Any
 
-from langchain.agents.middleware import AgentMiddleware, ModelRequest
-from langgraph.runtime import Runtime
+from langchain.agents.middleware import AgentMiddleware, ModelRequest, ModelResponse
 
 from ..utils.providers import load_chat_model
 
@@ -37,13 +37,13 @@ class ModelProviderMiddleware(AgentMiddleware[Any]):
         if self.debug:
             print(f"ModelProviderMiddleware: {message}")
 
-    def modify_model_request(self, request: ModelRequest, state: Any, runtime: Runtime[None]) -> ModelRequest:
-        """Load model using our load_chat_model utility with automatic provider registration."""
+    def _process_model_request(self, request: ModelRequest) -> None:
+        """Process and modify the model request (shared logic for sync and async)."""
         self._log(f"Processing model request: {request.model} (type: {type(request.model)})")
 
         try:
             # Check if runtime context has a model specification
-            model_spec = getattr(runtime.context, "model", None)
+            model_spec = getattr(request.runtime.context, "model", None)
             self._log(f"Context model spec: {model_spec}")
 
             if model_spec:
@@ -81,4 +81,21 @@ class ModelProviderMiddleware(AgentMiddleware[Any]):
             raise
 
         self._log(f"Final model: {request.model} (type: {type(request.model)})")
-        return request
+
+    def wrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], ModelResponse],
+    ) -> ModelResponse:
+        """Load model using our load_chat_model utility with automatic provider registration (sync)."""
+        self._process_model_request(request)
+        return handler(request)
+
+    async def awrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], Awaitable[ModelResponse]],
+    ) -> ModelResponse:
+        """Load model using our load_chat_model utility with automatic provider registration (async)."""
+        self._process_model_request(request)
+        return await handler(request)

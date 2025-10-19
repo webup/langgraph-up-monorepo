@@ -115,7 +115,7 @@ class TestPromptUtils:
     @patch("langgraph_up_devkits.utils.prompts.get_runtime")
     def test_create_context_aware_prompt_preserves_existing_messages(self, mock_get_runtime):
         """Test that existing messages are preserved."""
-        from langchain_core.messages import AIMessage, HumanMessage
+        from langchain.messages import AIMessage, HumanMessage
 
         from langgraph_up_devkits.utils import create_context_aware_prompt
 
@@ -411,7 +411,7 @@ class TestProviderUtils:
         result = _register_openrouter_provider()
 
         assert result is True
-        mock_register.assert_called_with("openrouter", "openai", base_url="https://openrouter.ai/api/v1")
+        mock_register.assert_called_with("openrouter", "openai-compatible", base_url="https://openrouter.ai/api/v1")
 
     @patch("langgraph_up_devkits.utils.providers._register_qwen_provider")
     @patch("langgraph_up_devkits.utils.providers._register_siliconflow_provider")

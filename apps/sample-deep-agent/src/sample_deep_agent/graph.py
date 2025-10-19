@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from deepagents import async_create_deep_agent  # type: ignore[import-untyped]
+from deepagents import create_deep_agent  # type: ignore[import-untyped]
 from langchain_core.runnables import RunnableConfig
 from langgraph_up_devkits import load_chat_model
 from langgraph_up_devkits.tools import deep_web_search, think_tool
@@ -35,12 +35,12 @@ def make_graph(config: RunnableConfig | None = None) -> Any:
     # Load model based on context configuration
     model = load_chat_model(context.model_name)
 
-    # Create deep agent with research capabilities (remove research_sub_agent from subagents list)
-    agent = async_create_deep_agent(
-        tools=[deep_web_search, think_tool],
-        instructions=get_research_instructions(),
-        subagents=RESEARCH_AGENTS,  # Research agent in subagents list
+    # Create deep agent with research capabilities
+    agent = create_deep_agent(
         model=model,
+        tools=[deep_web_search, think_tool],
+        system_prompt=get_research_instructions(),
+        subagents=RESEARCH_AGENTS,
         context_schema=DeepAgentContext,
     ).with_config({"recursion_limit": context.recursion_limit})
 
