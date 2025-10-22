@@ -8,10 +8,8 @@ from langchain.messages import AIMessage, HumanMessage
 from langchain.tools import BaseTool
 from langchain_core.messages import BaseMessage
 
-from langgraph_up_devkits.context.schemas import (
+from langgraph_up_devkits.context import (
     BaseAgentContext,
-    DataAnalystContext,
-    ResearchContext,
 )
 
 # ===== MOCK OBJECTS =====
@@ -258,27 +256,6 @@ class AgentTestBuilder:
 # ===== PYTEST FIXTURES =====
 
 
-@pytest.fixture
-def data_analyst_context():
-    """Create data analyst context for testing."""
-    return DataAnalystContext(
-        model="openai:openai/gpt-4o",
-        max_search_results=5,
-        max_data_rows=1000,
-        enable_data_viz=True,
-        user_id="test_analyst",
-    )
-
-
-@pytest.fixture
-def research_context():
-    """Create research context for testing."""
-    return ResearchContext(
-        model="openai:anthropic/claude-sonnet-4",
-        enable_deepwiki=True,
-        max_search_results=10,
-        user_id="test_researcher",
-    )
 
 
 @pytest.fixture
@@ -326,8 +303,6 @@ __all__ = [
     "mock_runtime_context",
     "AgentTestBuilder",
     # Fixtures (automatically available when imported in conftest.py)
-    "data_analyst_context",
-    "research_context",
     "mock_web_search_tool",
     "mock_chat_model",
     "sample_conversation",

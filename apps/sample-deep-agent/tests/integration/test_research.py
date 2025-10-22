@@ -3,7 +3,7 @@
 import os
 
 import pytest
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain.messages import AIMessage, HumanMessage
 
 
 @pytest.mark.integration

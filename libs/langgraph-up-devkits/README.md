@@ -13,9 +13,9 @@ A comprehensive development toolkit for LangGraph agents (LangChain v1) providin
 
 ## Version
 
-**Current Version: 0.3.0** - LangChain v1 compatible
+**Current Version: 0.4.0** - LangChain v1 compatible
 
-This version uses the modern LangChain v1 API with `wrap_model_call` middleware pattern.
+This version uses the modern LangChain v1 API with `wrap_model_call` middleware pattern and provides a minimal, explicit API surface.
 
 ## Installation
 
@@ -58,14 +58,20 @@ Since `langchain-qwq` and `langchain-siliconflow` have not yet been upgraded to 
 ## Quick Start
 
 ```python
+from dataclasses import dataclass
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage
-from langgraph_up_devkits import (
-    DataAnalystContext,
-    ModelProviderMiddleware,
-    web_search,
-    create_context_aware_prompt
-)
+from langchain.messages import HumanMessage
+from langgraph_up_devkits import load_chat_model
+from langgraph_up_devkits.context import SearchContext, DataContext
+from langgraph_up_devkits.middleware import ModelProviderMiddleware
+from langgraph_up_devkits.tools import web_search
+from langgraph_up_devkits.utils import create_context_aware_prompt
+
+# Create custom context by composing mixins
+@dataclass(kw_only=True)
+class DataAnalystContext(SearchContext, DataContext):
+    """Custom context for data analyst agents."""
+    pass
 
 # Create agent using devkit components (LangChain v1)
 agent = create_agent(
@@ -91,14 +97,27 @@ result = await agent.ainvoke(
 
 ### Context Schemas
 
-- `BaseAgentContext` - Core configuration
-- `SearchContext` - Search capabilities
-- `DataContext` - Data analysis features
-- `DataAnalystContext` - Composed context for data analysts
-- `ResearchContext` - Research assistant configuration
+Composable context mixins for building custom agent configurations:
+
+- `BaseAgentContext` - Core configuration (model, temperature, user_id, etc.)
+- `SearchContext` - Search capabilities (max_search_results, enable_deepwiki, etc.)
+- `DataContext` - Data analysis features (max_data_rows, enable_data_viz, etc.)
+
+**Usage Pattern**: Compose contexts by inheriting from multiple mixins:
+
+```python
+from dataclasses import dataclass
+from langgraph_up_devkits.context import SearchContext, DataContext
+
+@dataclass(kw_only=True)
+class MyCustomContext(SearchContext, DataContext):
+    """Custom context combining search and data capabilities."""
+    custom_field: str = "default_value"
+```
 
 ### Middleware
 
+- `BaseMiddleware` - Base class with structured logging support
 - `ModelProviderMiddleware` - Automatic model provider switching with `wrap_model_call` and `awrap_model_call` (LangChain v1)
 - `FileSystemMaskMiddleware` - Shadows virtual file system from model context
 
@@ -115,9 +134,31 @@ result = await agent.ainvoke(
 
 ### Utilities
 
+- `load_chat_model` - Unified model loading with automatic provider registration (exported at top level)
 - `create_context_aware_prompt` - Dynamic prompt generation
 - Provider registration utilities
 - Testing helpers and mocks
+
+## API Structure
+
+The library follows an explicit import pattern for clarity:
+
+```python
+# Top-level export (most commonly used)
+from langgraph_up_devkits import load_chat_model
+
+# Explicit submodule imports (recommended)
+from langgraph_up_devkits.context import BaseAgentContext, SearchContext, DataContext
+from langgraph_up_devkits.middleware import BaseMiddleware, ModelProviderMiddleware
+from langgraph_up_devkits.tools import web_search, deep_web_search, think_tool
+from langgraph_up_devkits.utils import create_context_aware_prompt, AVAILABLE_PROVIDERS
+```
+
+This design ensures:
+- ✅ Clear import paths showing where components come from
+- ✅ Minimal top-level namespace pollution
+- ✅ Easy discoverability through IDE autocomplete
+- ✅ Better maintainability and refactoring support
 
 ## Examples
 
@@ -148,7 +189,7 @@ The `ModelProviderMiddleware` uses the modern `wrap_model_call` pattern from Lan
 ```python
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage
+from langchain.messages import HumanMessage
 from langgraph_up_devkits.middleware import ModelProviderMiddleware
 from dataclasses import dataclass
 
@@ -200,7 +241,7 @@ The `FileSystemMaskMiddleware` automatically shadows the `files` field from the 
 from typing import Annotated
 from langchain.agents import create_agent, AgentState
 from langchain.agents.middleware import AgentMiddleware
-from langchain_core.messages import HumanMessage, add_messages
+from langchain.messages import HumanMessage, add_messages
 from langgraph_up_devkits.middleware import FileSystemMaskMiddleware
 
 # Define a middleware to extend state with files field
@@ -250,13 +291,20 @@ assert result["files"]["config.json"] == '{"setting": "value"}'
 ### Context-Aware Tools
 
 ```python
+from dataclasses import dataclass
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage
+from langchain.messages import HumanMessage
 from langgraph_up_devkits.context import SearchContext
 from langgraph_up_devkits.tools import web_search, fetch_url, get_deepwiki_tools, get_context7_tools
 
+# Create custom research context
+@dataclass(kw_only=True)
+class ResearchContext(SearchContext):
+    """Custom context for research tasks."""
+    pass
+
 # Create search context with specific settings
-search_context = SearchContext(
+search_context = ResearchContext(
     model="openrouter:anthropic/claude-sonnet-4",
     max_search_results=5,
     enable_deepwiki=True
@@ -271,7 +319,7 @@ agent = create_agent(
     model="openai:gpt-4o",
     tools=[web_search, fetch_url] + deepwiki_tools + context7_tools,
     system_prompt="You are a research assistant with web search, GitHub documentation, and library documentation access.",
-    context_schema=SearchContext
+    context_schema=ResearchContext
 )
 
 # Tools automatically respect context limits
@@ -285,14 +333,20 @@ result = await agent.ainvoke(
 
 ```python
 import os
+from dataclasses import dataclass
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage
-from langgraph_up_devkits import (
-    ResearchContext,
-    ModelProviderMiddleware,
-    web_search,
-    create_context_aware_prompt
-)
+from langchain.messages import HumanMessage
+from langgraph_up_devkits.context import SearchContext
+from langgraph_up_devkits.middleware import ModelProviderMiddleware
+from langgraph_up_devkits.tools import web_search
+from langgraph_up_devkits.utils import create_context_aware_prompt
+
+# Create custom research context
+@dataclass(kw_only=True)
+class ResearchContext(SearchContext):
+    """Custom context for research assistant."""
+    pass
+
 # Set up environment (ensure API keys are available)
 os.environ["TAVILY_API_KEY"] = "your_tavily_key"
 os.environ["SILICONFLOW_API_KEY"] = "your_siliconflow_key"
@@ -313,8 +367,7 @@ research_context = ResearchContext(
     model="siliconflow:THUDM/glm-4-9b-chat",  # Switch to SiliconFlow GLM
     max_search_results=10,
     enable_deepwiki=True,
-    user_id="researcher_001",
-    thread_id="research_session_123"
+    user_id="researcher_001"
 )
 
 # Perform research task
@@ -342,7 +395,7 @@ DeepWiki provides documentation and insights for GitHub repositories:
 
 ```python
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage
+from langchain.messages import HumanMessage
 from langgraph_up_devkits.tools import get_deepwiki_tools
 
 # Get built-in DeepWiki tools
@@ -366,7 +419,7 @@ Context7 provides up-to-date documentation for popular libraries and frameworks:
 
 ```python
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage
+from langchain.messages import HumanMessage
 from langgraph_up_devkits.tools import get_context7_tools
 
 # Get built-in Context7 tools
@@ -507,13 +560,18 @@ SILICONFLOW_API_KEY=your_siliconflow_api_key
 The library includes comprehensive testing utilities:
 
 ```python
-from langgraph_up_devkits.testing import AgentTestBuilder, MockRuntime
+from dataclasses import dataclass
+from langgraph_up_devkits.context import SearchContext, DataContext
 
-# Test your agents easily
-result = await (AgentTestBuilder()
-    .with_context(DataAnalystContext())
-    .with_messages(["Analyze quarterly sales"])
-    .run_test(agent))
+# Create custom contexts for testing
+@dataclass(kw_only=True)
+class TestContext(SearchContext, DataContext):
+    """Custom test context."""
+    pass
+
+# Testing utilities available in tests/ directory
+# Test your agents with standard pytest patterns
+# See tests/unit/ and tests/integration/ for examples
 ```
 
 ## Development

@@ -29,11 +29,14 @@ def make_graph(config: RunnableConfig | None = None) -> Any:
 
     # Convert runnable config to context
     configurable = config.get("configurable", {})
-    context_kwargs = {k: v for k, v in configurable.items() if k in DeepAgentContext.model_fields}
+    from dataclasses import fields
+
+    context_field_names = {f.name for f in fields(DeepAgentContext)}
+    context_kwargs = {k: v for k, v in configurable.items() if k in context_field_names}
     context = DeepAgentContext(**context_kwargs)
 
     # Load model based on context configuration
-    model = load_chat_model(context.model_name)
+    model = load_chat_model(context.model)
 
     # Create deep agent with research capabilities
     agent = create_deep_agent(

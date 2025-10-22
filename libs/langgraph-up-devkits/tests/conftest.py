@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from langgraph_up_devkits.context.schemas import BaseAgentContext, SearchContext
+from langgraph_up_devkits.context import BaseAgentContext, SearchContext
 from tests.testing import MockRuntime
 
 # Note: Environment variables are now loaded via pytest-dotenv plugin

@@ -1,22 +1,25 @@
-"""Simple state definition for Agent1 extending MessagesState."""
+"""State definition for sample-agent extending AgentState."""
 
-from typing import Annotated, TypedDict
+from typing import NotRequired
 
-from langchain_core.messages import BaseMessage
-from langgraph.graph.message import add_messages
+from langchain.agents import AgentState as BaseAgentState
 
 
-class AgentState(TypedDict):
-    """Simple state for sample-agent with task description support."""
+class AgentState(BaseAgentState):  # type: ignore[type-arg]
+    """State for sample-agent with additional fields.
 
-    # Core message history
-    messages: Annotated[list[BaseMessage], add_messages]
+    Extends langchain.agents.AgentState which provides:
+    - messages: Annotated[list[BaseMessage], add_messages]
+    - jump_to: NotRequired[Annotated[JumpTo | None, EphemeralValue, PrivateStateAttr]]
+    - structured_response: NotRequired[Annotated[ResponseT, OmitFromInput]]
+    """
 
-    # Required for create_react_agent
+    # Required by create_react_agent
     remaining_steps: int
 
-    # Task management - following the reference pattern
-    task_description: str | None
+    # Additional fields for supervisor pattern
+    task_description: NotRequired[str | None]
+    active_agent: NotRequired[str | None]
 
-    # Active agent tracking
-    active_agent: str | None
+
+__all__ = ["AgentState"]

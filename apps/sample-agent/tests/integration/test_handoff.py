@@ -1,7 +1,7 @@
 """Integration tests for handoff functionality with real models and workflows."""
 
 import pytest
-from langchain_core.messages import HumanMessage
+from langchain.messages import HumanMessage
 from sample_agent.graph import make_graph
 from sample_agent.state import AgentState
 from sample_agent.tools.handoff import create_custom_handoff_tool

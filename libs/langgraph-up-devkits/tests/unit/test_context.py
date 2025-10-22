@@ -3,11 +3,9 @@
 import os
 from unittest.mock import patch
 
-from langgraph_up_devkits.context.schemas import (
+from langgraph_up_devkits.context import (
     BaseAgentContext,
-    DataAnalystContext,
     DataContext,
-    ResearchContext,
     SearchContext,
 )
 
@@ -18,7 +16,7 @@ class TestBaseAgentContext:
     def test_default_values(self):
         """Test default context values."""
         context = BaseAgentContext()
-        assert context.model == "openai:openai/gpt-4o"
+        assert context.model == "siliconflow:zai-org/GLM-4.5"
         assert context.user_id is None
 
     @patch.dict(os.environ, {"MODEL": "qwen:qwen-flash", "USER_ID": "test_user"}, clear=False)
@@ -59,48 +57,6 @@ class TestSearchContext:
 class TestComposedContexts:
     """Test composed context schemas."""
 
-    def test_data_analyst_context_composition(self):
-        """Test that DataAnalystContext inherits from both SearchContext and DataContext."""  # noqa: E501
-        context = DataAnalystContext()
-
-        # Should have BaseAgentContext fields
-        assert hasattr(context, "model")
-        assert hasattr(context, "user_id")
-
-        # Should have SearchContext fields
-        assert hasattr(context, "max_search_results")
-        assert hasattr(context, "enable_deepwiki")
-
-        # Should have DataContext fields
-        assert hasattr(context, "max_data_rows")
-
-        # Should have its own fields
-        assert "data analyst assistant" in context.system_prompt.lower()
-
-        # Test default values for data analyst
-        assert context.max_search_results == 8  # Data analyst override
-        assert context.enable_data_viz is True
-        assert context.max_data_rows == 1000
-
-    def test_research_context_composition(self):
-        """Test that ResearchContext has proper inheritance."""
-        context = ResearchContext()
-
-        # Should have BaseAgentContext fields
-        assert hasattr(context, "model")
-        assert hasattr(context, "user_id")
-
-        # Should have SearchContext fields
-        assert hasattr(context, "max_search_results")
-        assert hasattr(context, "enable_deepwiki")
-
-        # Should have its own fields
-        assert "research assistant" in context.system_prompt.lower()
-
-        # Test default values for research assistant
-        assert context.max_search_results == 10  # Research override
-        assert context.enable_deepwiki is True  # Research default
-
     def test_data_context_composition(self):
         """Test DataContext has correct fields and defaults."""
         context = DataContext()
@@ -125,7 +81,7 @@ class TestComposedContexts:
 
     def test_context_serialization(self):
         """Test context can be serialized to dict."""
-        context = DataAnalystContext(model="test-model", user_id="test-user", max_search_results=15)
+        context = SearchContext(model="test-model", user_id="test-user", max_search_results=15)
 
         # Should be serializable
         from dataclasses import asdict
@@ -138,20 +94,17 @@ class TestComposedContexts:
 
     def test_context_inheritance_chain(self):
         """Test the inheritance chain works correctly."""
-        # DataAnalystContext should inherit from all parent classes
-        da_context = DataAnalystContext()
+        # SearchContext should inherit from BaseAgentContext
+        search_context = SearchContext()
 
-        assert isinstance(da_context, BaseAgentContext)
-        assert isinstance(da_context, SearchContext)
-        assert isinstance(da_context, DataContext)
-        assert isinstance(da_context, DataAnalystContext)
+        assert isinstance(search_context, BaseAgentContext)
+        assert isinstance(search_context, SearchContext)
 
-        # ResearchContext should inherit correctly
-        r_context = ResearchContext()
+        # DataContext should inherit from BaseAgentContext
+        data_context = DataContext()
 
-        assert isinstance(r_context, BaseAgentContext)
-        assert isinstance(r_context, SearchContext)
-        assert isinstance(r_context, ResearchContext)
+        assert isinstance(data_context, BaseAgentContext)
+        assert isinstance(data_context, DataContext)
 
     def test_context_field_override_precedence(self):
         """Test that explicit values override environment and defaults."""
@@ -186,7 +139,7 @@ class TestComposedContexts:
         """Test all default values are set correctly."""
         # BaseAgentContext defaults
         base_context = BaseAgentContext()
-        assert base_context.model == "openai:openai/gpt-4o"
+        assert base_context.model == "siliconflow:zai-org/GLM-4.5"
         assert base_context.user_id is None
 
         # SearchContext defaults
@@ -199,34 +152,6 @@ class TestComposedContexts:
         assert data_context.max_data_rows == 1000
         assert data_context.enable_data_viz is True
 
-    @patch.dict(
-        os.environ,
-        {
-            "MODEL": "qwen:qwen-flash",
-            "MAX_SEARCH_RESULTS": "20",
-            "ENABLE_DATA_VIZ": "false",
-            "MAX_DATA_ROWS": "5000",
-        },
-        clear=False,
-    )
-    def test_data_analyst_env_loading(self):
-        """Test DataAnalystContext environment variable loading."""
-        context = DataAnalystContext()
-        assert context.model == "qwen:qwen-flash"
-        assert context.max_search_results == 20
-        assert context.enable_data_viz is False
-        assert context.max_data_rows == 5000
-
-    def test_explicit_override_precedence(self):
-        """Test that explicit parameters override environment variables."""
-        with patch.dict(
-            os.environ,
-            {"MAX_SEARCH_RESULTS": "100", "ENABLE_DEEPWIKI": "false"},
-            clear=False,
-        ):
-            context = DataAnalystContext(max_search_results=5, enable_deepwiki=True)
-            assert context.max_search_results == 5  # Explicit override
-            assert context.enable_deepwiki is True  # Explicit override
 
 
 class TestDataContext:
@@ -297,7 +222,7 @@ class TestEnvironmentVariableHandling:
         with patch.dict(os.environ, {"MODEL": "", "USER_ID": ""}, clear=False):
             context = BaseAgentContext()
             # Empty strings should be treated as None/default
-            assert context.model == "openai:openai/gpt-4o"  # Default
+            assert context.model == "siliconflow:zai-org/GLM-4.5"  # Default
             assert context.user_id is None
 
 

@@ -27,11 +27,14 @@ def make_graph(config: RunnableConfig | None = None) -> CompiledStateGraph[Any, 
 
     # Convert runnable config to context
     configurable = config.get("configurable", {})
-    context_kwargs = {k: v for k, v in configurable.items() if k in SupervisorContext.model_fields}
+    from dataclasses import fields
+
+    context_field_names = {f.name for f in fields(SupervisorContext)}
+    context_kwargs = {k: v for k, v in configurable.items() if k in context_field_names}
     context = SupervisorContext(**context_kwargs)
 
     # Load model based on configuration
-    model = load_chat_model(context.model_name)
+    model = load_chat_model(context.model)
 
     # Create and return the research agent directly
     return create_agent(

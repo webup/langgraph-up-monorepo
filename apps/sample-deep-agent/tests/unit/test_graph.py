@@ -55,7 +55,7 @@ class TestGraphCreation:
 
         config = {
             "configurable": {
-                "model_name": "openrouter:anthropic/claude-opus-4",
+                "model": "openrouter:anthropic/claude-opus-4",
                 "max_todos": 3
             }
         }
