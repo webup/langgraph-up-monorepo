@@ -14,7 +14,7 @@ MAX_TODOS = 2  # Global maximum number of TODOs allowed per session
 class DeepAgentContext(BaseAgentContext):
     """Context configuration for deep agent runtime settings.
 
-    Extends BaseAgentContext with deep agent specific configuration:
+    Deep agent specific configuration:
     - Uses DeepSeek-V3.2-Exp model for advanced reasoning
     - Higher recursion limit (1000) for complex research workflows
     - Configurable max_todos for research task management
@@ -26,6 +26,8 @@ class DeepAgentContext(BaseAgentContext):
     - recursion_limit: LangGraph recursion depth (overridden to 1000)
     - debug: Enable debug logging
     - user_id: Optional user identifier
+
+    For HITL interrupts, pass interrupt_on directly to make_graph() instead of using context.
     """
 
     # Override model default for deep agent
