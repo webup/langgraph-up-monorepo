@@ -4,6 +4,26 @@ from langgraph.runtime import get_runtime
 
 from sample_deep_agent.context import MAX_TODOS, DeepAgentContext
 
+# Shared prompt templates
+TOOL_REJECTION_HANDLING = """**HANDLING TOOL REJECTIONS:**
+When a tool use request is REJECTED by the user:
+1. **IMMEDIATELY use think_tool** to reflect on why the request was rejected
+2. **ANALYZE the rejection** - what was the user's concern? What alternative approach should you take?
+3. **REVISE YOUR STRATEGY** - create a new plan that addresses the user's concerns
+4. **ADAPT YOUR APPROACH** - use different tools or methods that align with user preferences
+5. **NEVER repeat the same rejected action** - learn from the feedback and adjust
+
+**Example think_tool reflection after rejection:**
+"The user rejected my [tool_name] request. Let me think about why:
+- Perhaps the question can be answered without this tool
+- Maybe I should use a different approach or tool
+- Or the user wants a different strategy
+- Could there be resource or time constraints?
+Let me revise my strategy to [alternative approach]..."
+
+**CRITICAL:** After any tool rejection, ALWAYS use think_tool to reflect and adapt before proceeding.
+Do not repeat rejected actions - learn from feedback and adjust your approach."""
+
 # Sub-agent prompts
 SUB_RESEARCH_PROMPT = f"""You are a dedicated researcher. Your job is to conduct research based on the users questions.
 
@@ -24,6 +44,8 @@ SUB_RESEARCH_PROMPT = f"""You are a dedicated researcher. Your job is to conduct
 - TODO 1: Search for recent developments in [specific topic area]
 - TODO 2: Gather expert opinions and academic perspectives on [key aspect]
 - TODO 3: Synthesize findings into comprehensive analysis
+
+{TOOL_REJECTION_HANDLING}
 
 **CRITICAL:** Always begin with think_tool to plan your approach, then systematically execute your TODO list.
 Do not use tools randomly without a structured plan.
@@ -233,6 +255,17 @@ Use this for quick fact-checking or simple searches when not delegating to resea
 
 ### `think_tool`
 Use this for strategic planning, coordinating sub-agents, and synthesizing research results.
+
+{TOOL_REJECTION_HANDLING}
+
+**Additional context-specific examples:**
+- After task delegation rejection: Consider if the task is too complex, needs breaking down,
+  or should be handled directly
+- After deep_web_search rejection: Consider using existing knowledge, delegating to
+  research-agent, or refining the query
+
+**REMEMBER:** After ANY rejection (including task delegation), use think_tool to reflect and adapt.
+This demonstrates learning and responsiveness to user preferences.
 """
 
 

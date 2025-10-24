@@ -2,8 +2,8 @@
 
 from typing import Annotated, Any
 
-from langchain_core.messages import ToolMessage
-from langchain_core.tools import BaseTool, InjectedToolCallId, tool
+from langchain.messages import ToolMessage
+from langchain.tools import BaseTool, InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 from langgraph.types import Command
 from langgraph_supervisor.handoff import METADATA_KEY_HANDOFF_DESTINATION

@@ -3,7 +3,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain.messages import AIMessage, HumanMessage
 from sample_agent.state import AgentState
 from sample_agent.tools.basic import add, multiply, web_search
 from sample_agent.tools.handoff import create_custom_handoff_tool
@@ -92,7 +92,7 @@ class TestBasicWorkflow:
         mock_compiled_graph = Mock()
         mock_create_agent.return_value = mock_compiled_graph
 
-        config = {"configurable": {"model_name": "test_model"}}
+        config = {"configurable": {"model": "test_model"}}
         result = make_graph(config)
 
         mock_load_model.assert_called_once_with("test_model")
@@ -115,7 +115,7 @@ class TestBasicWorkflow:
         mock_compiled_graph = Mock()
         mock_create_agent.return_value = mock_compiled_graph
 
-        config = {"configurable": {"model_name": "test_model"}}
+        config = {"configurable": {"model": "test_model"}}
         result = make_graph(config)
 
         mock_load_model.assert_called_once_with("test_model")

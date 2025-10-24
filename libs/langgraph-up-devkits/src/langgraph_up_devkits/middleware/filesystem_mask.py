@@ -2,11 +2,12 @@
 
 from typing import Any
 
-from langchain.agents.middleware import AgentMiddleware
 from langgraph.runtime import Runtime
 
+from .base import BaseMiddleware
 
-class FileSystemMaskMiddleware(AgentMiddleware[Any]):
+
+class FileSystemMaskMiddleware(BaseMiddleware[Any, Any]):
     """Middleware that shadows the 'files' field before model calls and restores it after.
 
     This middleware removes the 'files' field from state before passing to the model
@@ -43,9 +44,13 @@ class FileSystemMaskMiddleware(AgentMiddleware[Any]):
 
     _NO_FILES_SENTINEL = object()  # Sentinel to distinguish None from no files
 
-    def __init__(self) -> None:
-        """Initialize the FileSystemMask middleware."""
-        super().__init__()
+    def __init__(self, debug: bool = False) -> None:
+        """Initialize the FileSystemMask middleware.
+
+        Args:
+            debug: Enable debug logging for file masking operations.
+        """
+        super().__init__(debug=debug)
         self._shadowed_files: Any = self._NO_FILES_SENTINEL
 
     def before_model(self, state: Any, runtime: Runtime[None]) -> dict[str, Any] | None:
@@ -53,7 +58,7 @@ class FileSystemMaskMiddleware(AgentMiddleware[Any]):
 
         Args:
             state: The current agent state, expected to have a "files" field.
-            runtime: The runtime context (unused but required by interface).
+            runtime: The runtime context.
 
         Returns:
             State update with "files" field removed, or None if no files to shadow.
@@ -62,19 +67,34 @@ class FileSystemMaskMiddleware(AgentMiddleware[Any]):
         if isinstance(state, dict) and "files" in state:
             # Store the files for later restoration (even if None)
             self._shadowed_files = state["files"]
+            self._log("Shadowing files field", runtime, files_count=len(state["files"]) if state["files"] else 0)
 
             # Return state update without files
             new_state = {k: v for k, v in state.items() if k != "files"}
             return new_state
 
+        self._log("No files field to shadow", runtime)
         return None
+
+    async def abefore_model(self, state: Any, runtime: Runtime[None]) -> dict[str, Any] | None:
+        """Shadow the 'files' field before model execution (async version).
+
+        Args:
+            state: The current agent state, expected to have a "files" field.
+            runtime: The runtime context.
+
+        Returns:
+            State update with "files" field removed, or None if no files to shadow.
+        """
+        # Async version delegates to sync implementation
+        return self.before_model(state, runtime)
 
     def after_model(self, state: Any, runtime: Runtime[None]) -> dict[str, Any] | None:
         """Restore the 'files' field after model execution.
 
         Args:
             state: The current agent state after model execution.
-            runtime: The runtime context (unused but required by interface).
+            runtime: The runtime context.
 
         Returns:
             State update with "files" field restored, or None if no files to restore.
@@ -84,6 +104,21 @@ class FileSystemMaskMiddleware(AgentMiddleware[Any]):
             # Restore the files (even if None)
             files = self._shadowed_files
             self._shadowed_files = self._NO_FILES_SENTINEL  # Clean up
+            self._log("Restoring files field", runtime, files_count=len(files) if files else 0)
             return {"files": files}
 
+        self._log("No files to restore", runtime)
         return None
+
+    async def aafter_model(self, state: Any, runtime: Runtime[None]) -> dict[str, Any] | None:
+        """Restore the 'files' field after model execution (async version).
+
+        Args:
+            state: The current agent state after model execution.
+            runtime: The runtime context.
+
+        Returns:
+            State update with "files" field restored, or None if no files to restore.
+        """
+        # Async version delegates to sync implementation
+        return self.after_model(state, runtime)

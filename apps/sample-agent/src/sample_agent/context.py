@@ -1,24 +1,41 @@
 """Context schema for supervisor configuration."""
 
-from typing import Any
+from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from dataclasses import asdict, dataclass, field
+
+from langgraph_up_devkits.context import BaseAgentContext
 
 
-class SupervisorContext(BaseModel):
-    """Context schema for supervisor configuration."""
+@dataclass(kw_only=True)
+class SupervisorContext(BaseAgentContext):
+    """Context schema for supervisor configuration.
 
-    model_name: str = Field(default="siliconflow:zai-org/GLM-4.5-Air", description="Default model name")
-    temperature: float = 0.7
-    max_tokens: int | None = None
-    debug_mode: bool = False
-    recursion_limit: int = Field(default=100, description="Recursion limit for agent execution")
+    Extends BaseAgentContext with supervisor-specific defaults.
+    Uses GLM-4.5-Air model by default for efficient coordination.
+
+    Inherits from BaseAgentContext:
+    - model: LLM identifier (overridden to siliconflow:zai-org/GLM-4.5-Air)
+    - temperature: Sampling temperature (default 0.7)
+    - max_tokens: Response token cap (default None)
+    - recursion_limit: LangGraph recursion depth (default 100)
+    - debug: Enable debug logging
+    - user_id: Optional user identifier
+    """
+
+    # Override model default for supervisor
+    model: str = field(
+        default="siliconflow:zai-org/GLM-4.5-Air",
+        metadata={
+            "description": "The name of the language model to use for the supervisor agent.",
+        },
+    )
 
     @classmethod
-    def default(cls) -> "SupervisorContext":
+    def default(cls) -> SupervisorContext:
         """Create default supervisor context."""
         return cls()
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, dict[str, str | float | int | bool | None]]:
         """Convert to dictionary for RunnableConfig."""
-        return {"configurable": self.model_dump()}
+        return {"configurable": asdict(self)}

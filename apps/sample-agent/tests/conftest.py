@@ -7,8 +7,8 @@ from collections.abc import Generator
 from unittest.mock import patch
 
 import pytest
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage
+from langchain.chat_models import BaseChatModel
+from langchain.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 
 

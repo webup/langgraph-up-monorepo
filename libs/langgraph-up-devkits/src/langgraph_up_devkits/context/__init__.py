@@ -1,17 +1,10 @@
-"""Context schemas for LangGraph agents."""
+"""Context schemas for LangGraph agent configuration."""
 
-from .schemas import (
-    BaseAgentContext,
-    DataAnalystContext,
-    DataContext,
-    ResearchContext,
-    SearchContext,
-)
+from .base import BaseAgentContext
+from .mixins import DataContext, SearchContext
 
 __all__ = [
     "BaseAgentContext",
-    "SearchContext",
     "DataContext",
-    "DataAnalystContext",
-    "ResearchContext",
+    "SearchContext",
 ]

@@ -1,6 +1,6 @@
 [project]
 name = "langgraph-up-devkits"
-version = "0.3.0"
+version = "0.4.0"
 description = "Development toolkit for LangGraph agents with middleware, context schemas, and provider integrations"
 authors = [
     { name = "Haili Zhang", email = "haili.zhang@outlook.com" },
@@ -20,12 +20,13 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
-    "langchain>=1.0.0",
-    "langchain-dev-utils>=1.0.0",
+    "langchain>=1.0.2",
+    "langchain-dev-utils>=1.0.2",
     "tavily-python>=0.7.12",
     "langchain-mcp-adapters>=0.1.11",
-    "langchain-openai>=1.0.0",
+    "langchain-openai>=1.0.1",
     "langchain-anthropic>=1.0.0",
+    "structlog>=25.4.0",
 ]
 
 [project.urls]

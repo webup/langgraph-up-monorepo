@@ -174,16 +174,146 @@ Automatic storage of:
 
 ## Testing
 
-Run the test suite:
+### Unit Tests
+
+Run unit tests (no API keys required):
 
 ```bash
-# Unit tests
 make unit sample-deep-agent
+```
 
-# Integration tests (requires API keys)
+### Integration Tests
+
+Integration tests require API keys and make real API calls:
+
+```bash
+# Set up environment variables first
+export SILICONFLOW_API_KEY=your_key_here
+export TAVILY_API_KEY=your_key_here
+
+# Run all integration tests
 make integration sample-deep-agent
 
-# All tests
+# Run specific HITL integration test
+cd apps/sample-deep-agent
+uv run pytest tests/integration/test_hitl.py::TestHITLWorkflow::test_comprehensive_hitl_workflow -v -s
+```
+
+### Human-in-the-Loop (HITL) Testing
+
+The agent includes comprehensive HITL integration tests that verify interrupt functionality with real LLM calls.
+
+#### HITL Configuration
+
+Configure interrupts by passing `interrupt_on` and `subagent_interrupts` to `make_graph()`:
+
+```python
+from sample_deep_agent.graph import make_graph
+
+# Define interrupt configuration
+interrupt_on = {
+    "task": {"allowed_decisions": ["approve", "reject"]},  # Only approve/reject
+    "write_todos": False,  # Don't interrupt write_todos
+    "think_tool": False,  # Don't interrupt think_tool
+    "deep_web_search": True,  # Interrupt at top level
+}
+
+subagent_interrupts = {
+    "research-agent": {
+        "deep_web_search": True,  # Interrupt in subagent too
+        "think_tool": False,  # Don't interrupt think_tool in subagent
+    }
+}
+
+# Create agent with HITL configuration
+agent = make_graph(
+    config={"configurable": {"max_todos": 1}},
+    interrupt_on=interrupt_on,
+    subagent_interrupts=subagent_interrupts
+)
+```
+
+#### Interrupt Decision Types
+
+Three types of decisions are supported:
+
+1. **Approve**: Execute tool with original arguments
+   ```python
+   {"type": "approve"}
+   ```
+
+2. **Reject**: Skip tool execution (agent receives error message)
+   ```python
+   {"type": "reject"}
+   ```
+
+3. **Edit**: Modify arguments before execution
+   ```python
+   {
+       "type": "edit",
+       "edited_action": {
+           "name": "tool_name",
+           "args": {"modified": "arguments"}
+       }
+   }
+   ```
+
+#### HITL Workflow Example
+
+```python
+import uuid
+from langchain.messages import HumanMessage
+from langgraph.types import Command
+
+# Use thread_id for state persistence (required for HITL)
+thread_id = str(uuid.uuid4())
+thread_config = {"configurable": {"thread_id": thread_id}}
+
+# Initial invocation
+result = await agent.ainvoke(
+    {"messages": [HumanMessage(content="What are the core features of LangChain v1?")]},
+    config=thread_config
+)
+
+# Handle interrupts
+while result.get("__interrupt__"):
+    interrupts = result["__interrupt__"][0].value
+    action_requests = interrupts["action_requests"]
+
+    # Make decisions for each action
+    decisions = []
+    for action in action_requests:
+        if action["name"] == "task":
+            decisions.append({"type": "approve"})
+        elif action["name"] == "deep_web_search":
+            decisions.append({"type": "reject"})
+        else:
+            decisions.append({"type": "approve"})
+
+    # Resume with decisions (must use same thread_config)
+    result = await agent.ainvoke(
+        Command(resume={"decisions": decisions}),
+        config=thread_config
+    )
+
+# Get final result
+final_message = result["messages"][-1]
+print(final_message.content)
+```
+
+#### Key Features Tested
+
+- ✅ Allowed decisions configuration (restrict to approve/reject only)
+- ✅ Top-level tool approval/rejection
+- ✅ Subagent-specific interrupt overrides
+- ✅ Multiple concurrent tool interrupts
+- ✅ Agent resilience when tools are rejected
+- ✅ Verification that rejected tools don't execute
+
+### All Tests
+
+```bash
+# Run all tests across the monorepo
 make test
 ```
 
